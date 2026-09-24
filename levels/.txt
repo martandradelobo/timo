@@ -1,0 +1,56 @@
+My name is Sherlock and I have taken ownership of your case.
+
+`CVE-2026-20267`, `CVE-2026-20268`, and `CVE-2026-20269` are addressed by [Cisco Security Advisory cisco-sa-hardening-iosxe-V8NMuMZJ](https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-hardening-iosxe-V8NMuMZJ). This advisory applies to Cisco IOS XE Software and has no workaround; upgrade to a fixed release is required.
+
+## Recommended IOS XE target
+
+    Use IOS XE 17.12.8 as the common remediation target for the IOS XE routers listed:
+
+    ISR4331: 17.9.4a -> 17.12.8 
+    Catalyst 8300: 17.6.5 -> 17.12.8 
+    Catalyst 8300: 17.12.5a -> 17.12.8 
+    Catalyst 8300: 17.12.6 -> 17.12.8 
+
+    The advisory’s first fixed releases are `17.9.10`, `17.12.8`, `17.15.6`, `17.18.4`, and `26.1.2`.
+
+## ROMMON requirement
+
+- ISR4331
+
+    No ROMMON upgrade is required for the upgrade from IOS XE 17.9.4a to 17.12.8.
+
+    Your current ROMMON version, 16.12(2r), is the Cisco-recommended ROMMON level for the ISR4331 on IOS XE 17.12.x.
+
+    For more information:
+
+    [Release Notes for Cisco 4000 Series ISRs, Cisco IOS XE 17.12.x](https://www.cisco.com/c/en/us/td/docs/routers/access/4400/release/xe-17-12/isr4k-rel-notes-xe-17-12.html)
+
+    [Upgrading Field-Programmable Hardware Devices for Cisco 4000 Series ISRs](https://www.cisco.com/c/en/us/td/docs/routers/access/4400/cpld/isr4400_hwfp.html)
+
+- Catalyst 8300
+
+    The ROMMON decision is dependent on the exact Catalyst 8300 product identifier:
+
+    - ROMMON 17.9(7r): no ROMMON update is indicated before moving to IOS XE 17.12.8.
+    - ROMMON 17.6(6r): aligns with the recommended level for certain Catalyst 8300 variants; other variants use `17.6(6.1r)` as the recommended level.
+    - ROMMON 17.3(5r): meets published minimums for the referenced C8300 variants but may be below the recommended ROMMON level for the specific hardware.
+
+    Please provide the exact product identifier for each Catalyst 8300, for example `C8300-1N1S-4T2X` or `C8300-2N2S-6T`. This is required to confirm whether a ROMMON update is needed and to identify the correct IOS XE image filename.
+
+## IOS devices listed
+
+    The Cisco 2921, VG310, and VG224 are running Cisco IOS, not IOS XE. They are therefore outside the scope of this IOS XE advisory, and IOS XE 17.12.8 is not an applicable upgrade target for those devices.
+
+## Pre-upgrade information required
+
+    Please attach the following output from the ISR4331 and each Catalyst 8300:
+
+    ```
+    show tech-support
+    ```
+
+This read-only collection confirms the exact PID, boot mode, installed image, storage availability, boot variables, licensing, and the final ROMMON requirement before the upgrade.
+
+You can also validate the device and target release against:
+
+[Cisco Software Checker](https://sec.cloudapps.cisco.com/security/center/softwarechecker.x)

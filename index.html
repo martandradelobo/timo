@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TIMO</title>
+<style>
+  html,body{margin:0;height:100%;background:#05060d;color:#e8ecff;
+    font-family:monospace;display:flex;align-items:center;justify-content:center;}
+  #wrap{position:relative;}
+  canvas{background:#0a0c1a;border:3px solid #2a3560;border-radius:10px;
+    image-rendering:pixelated;box-shadow:0 10px 40px #000a;display:block;}
+  #title{position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;
+    background:radial-gradient(circle at 50% 40%,#141a3a,#05060d);border-radius:8px;}
+  #title h1{font-size:44px;margin:0;color:#ffe27a;letter-spacing:3px;
+    text-shadow:0 3px 0 #a8791f;}
+  #title h2{font-size:18px;margin:6px 0 0;color:#9ab;letter-spacing:6px;}
+  #title p{color:#7fd97f;margin-top:30px;}
+  .btn{margin-top:16px;padding:10px 22px;background:#2a3560;border:2px solid #8ad;
+    border-radius:8px;color:#fff;cursor:pointer;font-family:monospace;font-size:16px;}
+  .btn:hover{background:#38477e;}
+  #hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;
+    color:#556;font-size:12px;}
+  small{color:#667;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="640" height="480"></canvas>
+  <div id="title">
+    <h1>TIMO</h1>
+    <h2>THE QUEST</h2>
+    <p>Arrow keys to move · ␣ / Enter to talk</p>
+    
+    <!-- Botões principais -->
+    <div>
+      <button class="btn" id="play">▶ Novo Jogo</button>
+      <button class="btn" id="cont" style="display:none">Continuar</button>
+    </div>
+
+    <!-- Seleção direta de níveis -->
+    <div style="margin-top: 15px;">
+      <button class="btn" onclick="startNewAtLevel(1)">Nível 1</button>
+      <button class="btn" onclick="startNewAtLevel(2)">Nível 2</button>
+      <button class="btn" onclick="startNewAtLevel(3)">Nível 3</button>
+      <button class="btn" onclick="startNewAtLevel(4)">Nível 4</button>
+      <button class="btn" onclick="startNewAtLevel(5)">Nível 5</button>
+      <button class="btn" onclick="startNewAtLevel(6)">Nível 6</button>
+      <button class="btn" onclick="startNewAtLevel(7)">Nível 7</button>
+    </div>
+  </div>
+  <div id="hint">Arrows move · Space/Enter interact &amp; advance dialogue</div>
+</div>
+
+<script src="engine.js"></script>
+<script src="levels/level1.js"></script>
+<script src="levels/level2.js"></script>
+<script src="levels/level3.js"></script>
+<script src="levels/level4.js"></script>
+<script src="levels/level5.js"></script>
+<script src="levels/level6.js"></script>
+<script src="levels/level7.js"></script>
+
+
+
+<script>
+  const canvas = document.getElementById('game');
+  const title  = document.getElementById('title');
+  const contBtn = document.getElementById('cont');
+  const playBtn = document.getElementById('play');
+
+  // Verifica se o nível atual já tem todas as tarefas concluídas
+  function checkAndAdvanceIfCompleted() {
+    const lvl = Game.state.level;
+
+    // Se estiver no Nível 1 e já encontrou os 4 membros da família
+    if (lvl === 1) {
+      const count = (Game.flag('found_mom') ? 1 : 0) + 
+                    (Game.flag('found_dad') ? 1 : 0) + 
+                    (Game.flag('found_sofia') ? 2 : 0);
+
+      if (count >= 4) {
+        Game.startLevel(1);
+        if (Game.levels[1] && typeof Game.levels[1].levelComplete === 'function') {
+          Game.levels[1].levelComplete();
+        }
+        return true;
+      }
+    }
+
+    // Se estiver no Nível 2 e já encontrou os 2 amigos
+    if (lvl === 2) {
+      const count = (Game.flag('l2_found_felix') ? 1 : 0) + 
+                    (Game.flag('l2_found_pinho') ? 1 : 0);
+
+      if (count >= 2) {
+        Game.startLevel(2);
+        if (Game.levels[2] && typeof Game.levels[2].friendsUnlocked === 'function') {
+          Game.levels[2].friendsUnlocked();
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Verifica se existe progresso guardado
+  function checkSave() {
+    try {
+      const s = JSON.parse(localStorage.getItem('tomas-quest') || 'null');
+      if (s && (s.level > 1 || (s.flags && Object.keys(s.flags).length))) {
+        contBtn.style.display = 'inline-block';
+      }
+    } catch(e) {}
+  }
+
+  // Oculta o menu de título
+  function hideTitle() {
+    title.style.display = 'none';
+    document.getElementById('hint').style.display = 'none';
+  }
+
+  // Começa um jogo NOVO do zero (Nível 1)
+  playBtn.onclick = () => {
+    hideTitle();
+    Game.init(canvas);
+    Game.reset(); // Reseta estado e apaga as flags anteriores
+  };
+
+  // CONTINUA o jogo do nível onde parou
+  contBtn.onclick = () => {
+    hideTitle();
+    Game.init(canvas);
+    
+    const savedLevel = Game.state.level || 1;
+    Game.startLevel(savedLevel);
+
+    // Se o nível guardado já estiver concluído, mostra o ecrã de transição
+    checkAndAdvanceIfCompleted();
+  };
+
+  // Inicia diretamente num nível específico
+  function startNewAtLevel(levelNum) {
+    hideTitle();
+    Game.init(canvas);
+    Game.state.flags = {}; // Limpa conquistas/flags anteriores
+    Game.state.level = levelNum;
+    Game.save();
+    Game.startLevel(levelNum);
+    checkAndAdvanceIfCompleted();
+  }
+
+  checkSave();
+</script>
+</body>
+</html>

@@ -1,56 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TIMO</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧑🏽</text></svg>">
+<title>TIMO - THE QUEST</title>
 <style>
-  html,body{margin:0;height:100%;background:#05060d;color:#e8ecff;
-    font-family:monospace;display:flex;align-items:center;justify-content:center;}
-  #wrap{position:relative;}
-  canvas{background:#0a0c1a;border:3px solid #2a3560;border-radius:10px;
-    image-rendering:pixelated;box-shadow:0 10px 40px #000a;display:block;}
-  #title{position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;
-    background:radial-gradient(circle at 50% 40%,#141a3a,#05060d);border-radius:8px;}
-  #title h1{font-size:44px;margin:0;color:#ffe27a;letter-spacing:3px;
-    text-shadow:0 3px 0 #a8791f;}
-  #title h2{font-size:18px;margin:6px 0 0;color:#9ab;letter-spacing:6px;}
-  #title p{color:#7fd97f;margin-top:30px;}
-  .btn{margin-top:16px;padding:10px 22px;background:#2a3560;border:2px solid #8ad;
-    border-radius:8px;color:#fff;cursor:pointer;font-family:monospace;font-size:16px;}
-  .btn:hover{background:#38477e;}
-  #hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;
-    color:#556;font-size:12px;}
-  small{color:#667;}
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #05060d;
+    color: #e8ecff;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #wrap {
+    position: relative;
+  }
+
+  canvas {
+    background: #0a0c1a;
+    border: 4px solid #38bdf8;
+    border-radius: 12px;
+    image-rendering: pixelated;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.25), 0 10px 40px #000;
+    display: block;
+  }
+
+  /* Overlay Efeito CRT / Scanlines */
+  #title::before {
+    content: " ";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 8px;
+  }
+
+  #title {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: radial-gradient(circle at 50% 35%, #1e1b4b, #090a0f 85%);
+    border-radius: 8px;
+    box-sizing: border-box;
+    padding: 20px;
+    z-index: 1;
+  }
+
+  /* Títulos */
+  #title h1 {
+    font-size: 42px;
+    margin: 0;
+    color: #ffe27a;
+    letter-spacing: 4px;
+    text-shadow: 3px 3px 0px #92400e, 0 0 12px rgba(255, 226, 122, 0.5);
+    text-transform: uppercase;
+  }
+
+  #title h2 {
+    font-size: 14px;
+    margin: 2px 0 14px;
+    color: #38bdf8;
+    letter-spacing: 6px;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  }
+
+  /* Botões e Interação */
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 220px;
+    margin-top: 5px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    background: #1e293b;
+    border: 2px solid #8ad;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 #0f172a;
+    transition: all 0.1s ease;
+    outline: none;
+  }
+
+  .btn:hover, .btn.selected {
+    background: #334155;
+    border-color: #ffe27a;
+    color: #ffe27a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #0f172a, 0 0 12px rgba(255, 226, 122, 0.4);
+  }
+
+  .btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #0f172a;
+  }
+
+  .btn-back {
+    border-color: #f43f5e;
+  }
+
+  .btn-back:hover, .btn-back.selected {
+    border-color: #fda4af;
+    color: #fda4af;
+    box-shadow: 0 6px 0 #0f172a, 0 0 12px rgba(244, 63, 94, 0.4);
+  }
+
+  #level-select-menu {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .level-grid .btn {
+    padding: 8px 0;
+    width: 75px;
+    font-size: 13px;
+  }
+
+  #credits-menu {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 380px;
+  }
+
+  .credits-box {
+    background: rgba(15, 23, 42, 0.92);
+    border: 2px solid #a855f7;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    color: #e2e8f0;
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 200px;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+  }
+
+  .credits-box h3 {
+    margin: 0 0 8px 0;
+    color: #ffe27a;
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  #hint {
+    position: absolute;
+    bottom: -28px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #64748b;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .blink {
+    animation: blinker 1.5s infinite;
+  }
+
+  @keyframes blinker {
+    50% { opacity: 0.4; }
+  }
 </style>
 </head>
 <body>
+
 <div id="wrap">
   <canvas id="game" width="640" height="480"></canvas>
+  
   <div id="title">
     <h1>TIMO</h1>
     <h2>THE QUEST</h2>
-    <p>Arrow keys to move · ␣ / Enter to talk</p>
     
-    <!-- Botões principais -->
-    <div>
+    <!-- Menu Principal -->
+    <div id="main-menu" class="btn-group">
       <button class="btn" id="play">▶ Novo Jogo</button>
-      <button class="btn" id="cont" style="display:none">Continuar</button>
+      <button class="btn" id="cont" style="display:none; border-color:#4ade80; color:#4ade80;">Continuar</button>
+      <button class="btn" id="btn-levels">🎮 Selecionar Nível</button>
+      <button class="btn" id="btn-credits" style="border-color:#a855f7; color:#c084fc;">❤️ Context & Credits</button>
     </div>
 
-    <!-- Seleção direta de níveis -->
-    <div style="margin-top: 15px;">
-      <button class="btn" onclick="startNewAtLevel(1)">Nível 1</button>
-      <button class="btn" onclick="startNewAtLevel(2)">Nível 2</button>
-      <button class="btn" onclick="startNewAtLevel(3)">Nível 3</button>
-      <button class="btn" onclick="startNewAtLevel(4)">Nível 4</button>
-      <button class="btn" onclick="startNewAtLevel(5)">Nível 5</button>
-      <button class="btn" onclick="startNewAtLevel(6)">Nível 6</button>
-      <button class="btn" onclick="startNewAtLevel(7)">Nível 7</button>
+    <!-- Submenu de Seleção de Níveis -->
+    <div id="level-select-menu">
+      <div class="level-grid">
+        <button class="btn" onclick="startNewAtLevel(1)">Nível 1</button>
+        <button class="btn" onclick="startNewAtLevel(2)">Nível 2</button>
+        <button class="btn" onclick="startNewAtLevel(3)">Nível 3</button>
+        <button class="btn" onclick="startNewAtLevel(4)">Nível 4</button>
+        <button class="btn" onclick="startNewAtLevel(5)">Nível 5</button>
+        <button class="btn" onclick="startNewAtLevel(6)">Nível 6</button>
+        <button class="btn" onclick="startNewAtLevel(7)">Nível 7</button>
+        <button class="btn" onclick="startNewAtLevel(8)">Nível 8</button>
+        <button class="btn" onclick="startNewAtLevel(9)">Nível 9</button>
+        <button class="btn" onclick="startNewAtLevel(10)">Nível 10</button>
+        <button class="btn" onclick="startNewAtLevel(11)">Nível 11</button>
+        <button class="btn" onclick="startNewAtLevel(12)">Nível 12</button>
+      </div>
+      <button class="btn btn-back" id="btn-back">◄ Voltar</button>
+    </div>
+
+    <div id="credits-menu">
+      <div class="credits-box">
+        <h3>❤️ QUERIDO ARROZINHO ❤️</h3>
+        <p>Isto é um joguinho que eu fiz com muito amor para ti.</p>
+        <p style="color:#94a3b8; font-style:italic;">I love you forever</p>
+        <p style="color:#94a3b8; font-style:italic;">Kiu</p>
+      </div>
+      <button class="btn btn-back" id="btn-back-credits">◄ Voltar</button>
     </div>
   </div>
-  <div id="hint">Arrows move · Space/Enter interact &amp; advance dialogue</div>
+
+  <div id="hint" class="blink">© Kiu · All Rights Reserved · 2026</div>
 </div>
 
 <script src="engine.js"></script>
@@ -61,20 +251,117 @@
 <script src="levels/level5.js"></script>
 <script src="levels/level6.js"></script>
 <script src="levels/level7.js"></script>
-
-
+<script src="levels/level8.js"></script>
+<script src="levels/level9.js"></script>
+<script src="levels/level10.js"></script>
+<script src="levels/level11.js"></script>
+<script src="levels/level12.js"></script>
 
 <script>
   const canvas = document.getElementById('game');
   const title  = document.getElementById('title');
   const contBtn = document.getElementById('cont');
   const playBtn = document.getElementById('play');
+  
+  const mainMenu = document.getElementById('main-menu');
+  const levelSelectMenu = document.getElementById('level-select-menu');
+  const creditsMenu = document.getElementById('credits-menu');
 
-  // Verifica se o nível atual já tem todas as tarefas concluídas
+  const btnLevels = document.getElementById('btn-levels');
+  const btnCredits = document.getElementById('btn-credits');
+  const btnBack = document.getElementById('btn-back');
+  const btnBackCredits = document.getElementById('btn-back-credits');
+
+  let menuSelectedIndex = 0;
+
+  function getActiveButtons() {
+    let container = null;
+    if (mainMenu.style.display !== 'none' && mainMenu.offsetWidth > 0) container = mainMenu;
+    else if (levelSelectMenu.style.display !== 'none' && levelSelectMenu.offsetWidth > 0) container = levelSelectMenu;
+    else if (creditsMenu.style.display !== 'none' && creditsMenu.offsetWidth > 0) container = creditsMenu;
+
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('.btn')).filter(b => b.style.display !== 'none');
+  }
+
+  function updateMenuSelection() {
+    const btns = getActiveButtons();
+    if (btns.length === 0) return;
+
+    if (menuSelectedIndex >= btns.length) menuSelectedIndex = 0;
+    if (menuSelectedIndex < 0) menuSelectedIndex = btns.length - 1;
+
+    if (creditsMenu.style.display !== 'none') {
+      const idxVoltar = btns.indexOf(btnBackCredits);
+      if (idxVoltar !== -1) menuSelectedIndex = idxVoltar;
+    }
+
+    btns.forEach((btn, idx) => {
+      if (idx === menuSelectedIndex) {
+        btn.classList.add('selected');
+      } else {
+        btn.classList.remove('selected');
+      }
+    });
+  }
+
+  function switchMenu(hideEl, showEl) {
+    hideEl.style.display = 'none';
+    showEl.style.display = 'flex';
+    menuSelectedIndex = 0;
+    updateMenuSelection();
+  }
+
+  btnLevels.onclick = () => switchMenu(mainMenu, levelSelectMenu);
+  btnCredits.onclick = () => switchMenu(mainMenu, creditsMenu);
+  btnBack.onclick = () => switchMenu(levelSelectMenu, mainMenu);
+  btnBackCredits.onclick = () => switchMenu(creditsMenu, mainMenu);
+
+  window.addEventListener('keydown', (e) => {
+    if (title.style.display === 'none') return;
+
+    const k = e.key;
+    const btns = getActiveButtons();
+    if (btns.length === 0) return;
+
+    if (creditsMenu.style.display !== 'none') {
+      if (k === ' ' || k === 'Enter' || k === 'Escape') {
+        e.preventDefault();
+        btnBackCredits.click();
+        return;
+      }
+    }
+
+    if (k === 'ArrowDown' || k === 'ArrowRight' || k.toLowerCase() === 's' || k.toLowerCase() === 'd') {
+      e.preventDefault();
+      menuSelectedIndex = (menuSelectedIndex + 1) % btns.length;
+      updateMenuSelection();
+    } else if (k === 'ArrowUp' || k === 'ArrowLeft' || k.toLowerCase() === 'w' || k.toLowerCase() === 'a') {
+      e.preventDefault();
+      menuSelectedIndex = (menuSelectedIndex - 1 + btns.length) % btns.length;
+      updateMenuSelection();
+    } else if (k === ' ' || k === 'Enter') {
+      e.preventDefault();
+      if (btns[menuSelectedIndex]) {
+        btns[menuSelectedIndex].click();
+      }
+    }
+  });
+
+  document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      const btns = getActiveButtons();
+      const idx = btns.indexOf(btn);
+      if (idx !== -1) {
+        menuSelectedIndex = idx;
+        updateMenuSelection();
+      }
+    });
+  });
+
   function checkAndAdvanceIfCompleted() {
     const lvl = Game.state.level;
 
-    // Se estiver no Nível 1 e já encontrou os 4 membros da família
     if (lvl === 1) {
       const count = (Game.flag('found_mom') ? 1 : 0) + 
                     (Game.flag('found_dad') ? 1 : 0) + 
@@ -89,7 +376,6 @@
       }
     }
 
-    // Se estiver no Nível 2 e já encontrou os 2 amigos
     if (lvl === 2) {
       const count = (Game.flag('l2_found_felix') ? 1 : 0) + 
                     (Game.flag('l2_found_pinho') ? 1 : 0);
@@ -106,30 +392,32 @@
     return false;
   }
 
-  // Verifica se existe progresso guardado
   function checkSave() {
     try {
       const s = JSON.parse(localStorage.getItem('tomas-quest') || 'null');
-      if (s && (s.level > 1 || (s.flags && Object.keys(s.flags).length))) {
-        contBtn.style.display = 'inline-block';
+      if (s && (s.level > 1 || (s.flags && Object.keys(s.flags).length > 0))) {
+        contBtn.style.display = 'block';
+      } else {
+        contBtn.style.display = 'none';
       }
-    } catch(e) {}
+    } catch(e) {
+      contBtn.style.display = 'none';
+    }
+    menuSelectedIndex = 0;
+    updateMenuSelection();
   }
 
-  // Oculta o menu de título
   function hideTitle() {
     title.style.display = 'none';
     document.getElementById('hint').style.display = 'none';
   }
 
-  // Começa um jogo NOVO do zero (Nível 1)
   playBtn.onclick = () => {
     hideTitle();
     Game.init(canvas);
-    Game.reset(); // Reseta estado e apaga as flags anteriores
+    Game.reset();
   };
 
-  // CONTINUA o jogo do nível onde parou
   contBtn.onclick = () => {
     hideTitle();
     Game.init(canvas);
@@ -137,15 +425,13 @@
     const savedLevel = Game.state.level || 1;
     Game.startLevel(savedLevel);
 
-    // Se o nível guardado já estiver concluído, mostra o ecrã de transição
     checkAndAdvanceIfCompleted();
   };
 
-  // Inicia diretamente num nível específico
   function startNewAtLevel(levelNum) {
     hideTitle();
     Game.init(canvas);
-    Game.state.flags = {}; // Limpa conquistas/flags anteriores
+    Game.state.flags = {};
     Game.state.level = levelNum;
     Game.save();
     Game.startLevel(levelNum);

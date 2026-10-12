@@ -138,15 +138,36 @@ function roundRect(ctx,x,y,w,h,r){
   ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
-function wrapText(ctx,text,x,y,maxW,lh){
-  const words = String(text).split(' '); let line=''; let yy=y; let lines=1;
-  for (const w of words){
-    const test = line ? line+' '+w : w;
-    if (ctx.measureText(test).width > maxW && line){ ctx.fillText(line,x,yy); line=w; yy+=lh; lines++; }
-    else line = test;
-  }
-  if (line) ctx.fillText(line,x,yy);
-  return lines;
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  if (!text) return 0;
+
+  // 1. Divide o texto primeiro pelas quebras de linha manuais (\n)
+  const paragraphs = text.split('\n');
+  let lineCount = 0;
+
+  paragraphs.forEach((paragraph) => {
+    const words = paragraph.split(' ');
+    let currentLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+      const metrics = ctx.measureText(testLine);
+
+      if (metrics.width > maxWidth && currentLine !== '') {
+        ctx.fillText(currentLine, x, y + lineCount * lineHeight);
+        currentLine = words[i];
+        lineCount++;
+      } else {
+        currentLine = testLine;
+      }
+    }
+
+    // Desenha a última linha de cada parágrafo
+    ctx.fillText(currentLine, x, y + lineCount * lineHeight);
+    lineCount++; // Salta para a próxima linha ao mudar de parágrafo (\n)
+  });
+
+  return lineCount; // Retorna o total de linhas desenhadas
 }
 
 /* -------------------------------------------------------------------- Game */
@@ -504,6 +525,13 @@ function drawEntity(ctx, e){
   ctx.textAlign='left';
   if(e.name){ ctx.fillStyle='#dfe'; ctx.font='11px monospace'; ctx.textAlign='center';
     ctx.fillText(e.name, cx, e.y-4); ctx.textAlign='left'; }
+}
+
+function drawMultilineText(ctx, text, x, y, lineHeight) {
+  const lines = text.split('\n');
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + (index * lineHeight));
+  });
 }
 
 function drawPlayer(ctx, p) {

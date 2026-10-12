@@ -1,7 +1,5 @@
 /* ============================================================================
- * TOMÁS: THE QUEST  —  LEVEL 5: THE SWIM (ENHANCED EDITION)
- * Theme: "Tomás vs. Canelinhas vs. Reizinho — Olympic Sprint"
- * Fixes: Fixed lanes on finish & swimming direction right-to-left for emoji alignment.
+ * TOMÁS: THE QUEST  —  LEVEL 5: THE SWIM 
  * ==========================================================================*/
 (function() {
   const L = { id: 5 };
@@ -14,9 +12,9 @@
     }
 
     Dialogue.start([
-      { speaker: 'NATAÇÃO', text: 'GRANDE FINAL DOS 200m LIVRES!' },
-      { speaker: 'REGRAS DE ESTAMINA', text: 'Gasta a tua energia com estratégia! Braçadas rápidas consomem estamina.' },
-      { speaker: 'CONTROLO', text: 'Carrega [ ESPAÇO ] no centro da barra para acelerar. Se a estamina esgotar, ficas exausto!' }
+      { speaker: 'QUEST', text: 'GANHA A GRANDE FINAL DOS 200m LIVRES!' },
+      { speaker: 'DICAS', text: 'Gasta a tua energia com estratégia! Braçadas rápidas consomem estamina.' },
+      { speaker: 'INSTRUÇÕES', text: 'Carrega [ ESPAÇO ] no centro da barra para acelerar. Se a estamina se esgotar, ficas exausto!' }
     ], () => {
       this.state = 'race';
       this.timer = 0;
@@ -28,7 +26,7 @@
     this.timer = 0;
     this.raceDistance = 200; // Corrida de 200m
 
-    // Sistema de Estamina
+  
     this.stamina = 100;
     this.maxStamina = 100;
     this.isExhausted = false;
@@ -76,7 +74,7 @@
 
     if (this.state !== 'race' || (typeof Dialogue !== 'undefined' && Dialogue.active)) return;
 
-    // 1. Atualizar Partículas de Salpicos
+    // Salpicos
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.x += p.vx * dt;
@@ -85,14 +83,14 @@
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
-    // 2. Cursor de Ritmo
+    //  Ritmo
     this.barPos += this.barDir * this.barSpeed * dt;
     if (this.barPos >= 1) { this.barPos = 1; this.barDir = -1; }
     if (this.barPos <= 0) { this.barPos = 0; this.barDir = 1; }
 
     if (this.feedbackTimer > 0) this.feedbackTimer -= dt;
 
-    // 3. IA dos Oponentes
+    // Canelinhas + Borges
     const canelinhas = this.swimmers.find(s => s.id === 'canelinhas');
     const reizinho = this.swimmers.find(s => s.id === 'reizinho');
     const tomas = this.swimmers.find(s => s.id === 'tomas');
@@ -101,7 +99,7 @@
     canelinhas.pos += (12.5 * sprintFactor + Math.sin(this.timer * 3) * 2) * dt;
     reizinho.pos += (11.5 * sprintFactor + Math.cos(this.timer * 2.5) * 2) * dt;
 
-    // 4. Estamina & Velocidade
+    // Estamina & Velocidade
     if (this.isExhausted) {
       this.stamina = Math.min(this.maxStamina, this.stamina + 25 * dt);
       tomas.speed = 6;
@@ -112,7 +110,7 @@
       tomas.speed = Math.max(0, tomas.speed - 9 * dt);
     }
 
-    // 5. Input do Jogador
+    // Input do Jogador
     if ((Input.once(' ') || Input.once('Enter')) && !this.isExhausted) {
       // Posição visual x ajustada da direita para a esquerda
       const screenX = Math.max(40, (game.W - 50) - (tomas.pos / this.raceDistance) * (game.W - 90));
@@ -140,13 +138,11 @@
       }
     }
 
-    // 6. Fim da Prova & Validação de Vitória (Sem alterar a ordem no array das pistas)
     if (this.swimmers.some(s => s.pos >= this.raceDistance)) {
-      // Encontrar vencedor sem reordenar o array `this.swimmers`
       const winner = [...this.swimmers].sort((a, b) => b.pos - a.pos)[0];
 
       if (winner.id === 'tomas') {
-        // Vitória do Tomás!
+        // Vitória 
         this.state = 'complete';
         this.timer = 0;
       } else {
@@ -195,7 +191,7 @@
       ctx.fillStyle = poolGrad;
       ctx.fillRect(0, 0, W, H - 110);
 
-      // Ondas de fundo
+      // Ondas 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 2;
       for (let y = 15; y < H - 110; y += 20) {
@@ -213,27 +209,26 @@
         ctx.beginPath(); ctx.moveTo(0, laneH * i); ctx.lineTo(W, laneH * i); ctx.stroke();
       }
 
-      // Linha de Chegada (Á Esquerda — 40px)
+      // Linha de Chegada 
       ctx.strokeStyle = '#facc15'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(40, 0); ctx.lineTo(40, H - 110); ctx.stroke();
 
-      // Partículas de Água
+      // Água
       ctx.fillStyle = '#e0f2fe';
       this.particles.forEach(p => ctx.fillRect(p.x, p.y, 3, 3));
 
-      // Render dos Nadadores (Mantendo sempre a ordem fixa das pistas)
+      // Nadadores 
       this.swimmers.forEach((s) => {
         const laneY = laneH * s.laneIndex + laneH / 2;
         // Posição no ecrã invertida (Parte de W - 50 e avança para a esquerda até 40)
         const screenX = Math.max(40, (W - 50) - (s.pos / this.raceDistance) * (W - 90));
 
-        // Rasto de Água (À direita do nadador já que ele nada para a esquerda)
+        // Rasto de Água 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.beginPath();
         ctx.ellipse(screenX + 12, laneY + 4, 16, 6, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Emoji OPAQUE (Originalmente virado para a esquerda)
         ctx.save();
         ctx.globalAlpha = 1.0;
         ctx.fillStyle = '#ffffff';
@@ -293,7 +288,7 @@
       }
     }
 
-    // Overlay Level Complete (Só visível em caso de vitória)
+    // Overlay Level Complete 
     if (this.state === 'complete') {
       const progress = Math.min(1, this.timer * 1.5);
 

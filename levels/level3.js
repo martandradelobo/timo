@@ -1,9 +1,5 @@
 /* ============================================================================
  * TOMÁS: THE QUEST  —  LEVEL 3: LOVE
- * Theme: "How Tomás met Kiu."
- * Visual Upgrade: Cozy RPG aesthetics, Dark Glass UI & Warm Ambient Lighting.
- * Standardized Retro Level Complete Card.
- * Fixed: Emoji opacity in final card & Fast Retry on Wrong Answers.
  * ==========================================================================*/
 
 Game.addLevel(3, {
@@ -73,7 +69,7 @@ Game.addLevel(3, {
 
     if (showIntro) {
       Dialogue.start([
-        { speaker: 'QUEST', text: 'FALA COM A KIU - O Tomás tem de iniciar uma conversa.' },
+        { speaker: 'QUEST', text: 'FALA COM A KIU - O Tomás tem de tentar começar uma conversa.' },
         questionDialog
       ]);
     } else {
@@ -133,7 +129,7 @@ Game.addLevel(3, {
         this.runDateScene(game);
       });
     } else {
-      const msg = pick === 'dinner' ? '🍝 Jantar é demasiado formal para um primeiro encontro. ' : '🎬 Cinema? Nem sequer se pode falar durante um filme! ';
+      const msg = pick === 'dinner' ? '🍝 Jantar parece um bocado sério para um primeiro encontro. ' : '🎬 Cinema? Nem sequer se pode falar durante um filme! ';
       Dialogue.start([
         { speaker: 'KIU', text: msg + 'Escolhe outra coisa.' }
       ], () => {
@@ -144,9 +140,9 @@ Game.addLevel(3, {
 
   runDateScene(game) {
     Dialogue.start([
-      { speaker: 'SCENE', text: 'O Tomás e a Kiu encontram-se no Bocca para beber uma sangria...' },
+      { speaker: '', text: 'O Tomás e a Kiu encontram-se no Bocca para beber uma sangria...' },
       { speaker: 'KIU', text: 'Gostei muito, o próximo pago eu!' },
-      { speaker: 'TOMÁS', text: 'Eu também. My fav girl.' }
+      { speaker: 'TOMÁS', text: 'Eu também, fav girl.' }
     ], () => {
       this.state = 'complete';
       this.timer = 0;
@@ -161,28 +157,23 @@ Game.addLevel(3, {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
 
-    // --- CENA 1: SALA DE ESTAR (Sofa / Ring / Photo / Quest / Date Select) ---
     if (['sofa', 'phone_ring', 'photo', 'quest', 'date_select'].includes(this.state)) {
-      // Parede com gradiente caloroso e tom profundo
       const wallGrad = ctx.createLinearGradient(0, 0, 0, H * 0.58);
       wallGrad.addColorStop(0, '#180e25');
       wallGrad.addColorStop(1, '#2e1b3c');
       ctx.fillStyle = wallGrad;
       ctx.fillRect(0, 0, W, H * 0.58);
 
-      // Padrão subtil de papel de parede
       ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
       for (let x = 0; x < W; x += 16) {
         ctx.fillRect(x, 0, 8, H * 0.58);
       }
 
-      // Rodapé da parede
       ctx.fillStyle = '#412743';
       ctx.fillRect(0, H * 0.58 - 12, W, 12);
       ctx.fillStyle = '#221225';
       ctx.fillRect(0, H * 0.58 - 3, W, 3);
 
-      // Chão de Madeira Quente
       const floorGrad = ctx.createLinearGradient(0, H * 0.58, 0, H);
       floorGrad.addColorStop(0, '#522f23');
       floorGrad.addColorStop(1, '#301a13');
@@ -194,14 +185,12 @@ Game.addLevel(3, {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
 
-      // Luz da Lua a incidir suavemente no chão
       const moonGlow = ctx.createRadialGradient(W / 2, 60, 20, W / 2, H * 0.7, 180);
       moonGlow.addColorStop(0, 'rgba(254, 240, 138, 0.08)');
       moonGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = moonGlow;
       ctx.fillRect(0, 0, W, H);
 
-      // Janela com Luz da Lua e Estrelas
       const wx = W / 2 - 45, wy = 20, ww = 90, wh = 75;
       ctx.fillStyle = '#0a0f1d'; roundRect(ctx, wx, wy, ww, wh, 8); ctx.fill();
       ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.5;
@@ -214,7 +203,6 @@ Game.addLevel(3, {
       ctx.beginPath(); ctx.moveTo(wx + ww/2, wy); ctx.lineTo(wx + ww/2, wy + wh); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(wx, wy + wh/2); ctx.lineTo(wx + ww, wy + wh/2); ctx.stroke();
 
-      // Quadros na parede com Molduras Douradas
       ctx.fillStyle = '#140c1e'; roundRect(ctx, W * 0.12, 35, 54, 44, 4); ctx.fill();
       ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 1.5; roundRect(ctx, W * 0.12, 35, 54, 44, 4); ctx.stroke();
       ctx.font = emojiFont(20); ctx.textAlign = 'center'; ctx.fillText('🎨', W * 0.12 + 27, 65);
@@ -223,20 +211,16 @@ Game.addLevel(3, {
       ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 1.5; roundRect(ctx, W * 0.78, 45, 48, 48, 4); ctx.stroke();
       ctx.font = emojiFont(20); ctx.fillText('🖼️', W * 0.78 + 24, 77);
 
-      // Tapete Elegante da Sala
       const rx = W / 2 - 140, ry = H * 0.54, rw = 280, rh = 105;
       ctx.fillStyle = '#781c3c'; roundRect(ctx, rx, ry, rw, rh, 16); ctx.fill();
       ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 1.5; roundRect(ctx, rx + 4, ry + 4, rw - 8, rh - 8, 12); ctx.stroke();
 
-      // Mesa de Apoio & Planta
       ctx.fillStyle = '#33170e'; roundRect(ctx, W / 2 - 175, H * 0.45, 38, 55, 4); ctx.fill();
       ctx.font = emojiFont(24); ctx.textAlign = 'center'; ctx.fillText('🪴', W / 2 - 156, H * 0.45);
 
-      // Sombras projetadas do sofá
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(W / 2 - 110, H * 0.40 + 60, 220, 18);
 
-      // Sofá Acolhedor em Vinho
       const sx = W / 2 - 100, sy = H * 0.40, sw = 200, sh = 85;
       ctx.fillStyle = '#610f27'; roundRect(ctx, sx, sy, sw, 50, 12); ctx.fill();
       ctx.fillStyle = '#420618'; // Braços do sofá
@@ -246,11 +230,9 @@ Game.addLevel(3, {
       roundRect(ctx, sx + 8, sy + 28, sw / 2 - 12, 36, 6); ctx.fill();
       roundRect(ctx, sx + sw / 2 + 4, sy + 28, sw / 2 - 12, 36, 6); ctx.fill();
 
-      // Tomás Sentado no Sofá
       ctx.font = emojiFont(36); ctx.textAlign = 'center';
-      ctx.fillText('🧑‍💻', W / 2, sy + 42);
+      ctx.fillText('👨🏽‍💻', W / 2, sy + 42);
 
-      // Notificação: Telefone a Tocar
       if (this.state === 'phone_ring') {
         const bx = W / 2 - 130, by = H * 0.22, bw = 260, bh = 34;
         ctx.fillStyle = 'rgba(16, 14, 26, 0.9)'; roundRect(ctx, bx, by, bw, bh, 8); ctx.fill();
@@ -260,7 +242,6 @@ Game.addLevel(3, {
         ctx.fillText('📱 NOTIFICAÇÃO! (Espaço / Enter)', W / 2, by + 22);
       }
 
-      // Ecrã da Foto da Kiu (Estilo Smartphone Dark Glass)
       if (this.state === 'photo') {
         ctx.fillStyle = 'rgba(8, 6, 15, 0.85)';
         ctx.fillRect(0, 0, W, H);
@@ -272,7 +253,6 @@ Game.addLevel(3, {
         ctx.fillStyle = '#ffe27a'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
         ctx.fillText('📱 NEW STORY', W / 2, py + 30);
         
-        // Moldura interna do Avatar
         ctx.fillStyle = '#201530'; roundRect(ctx, W / 2 - 45, py + 48, 90, 90, 45); ctx.fill();
         ctx.strokeStyle = '#ff6b8b'; ctx.lineWidth = 2; roundRect(ctx, W / 2 - 45, py + 48, 90, 90, 45); ctx.stroke();
 
@@ -286,16 +266,13 @@ Game.addLevel(3, {
       }
     }
 
-    // --- CENA 2: ENCONTRO NO BAR (Date Scene) ---
     if (this.state === 'date_scene') {
-      // Fundo Acolhedor de Pub / Bar À Noite
       const barGrad = ctx.createLinearGradient(0, 0, 0, H);
       barGrad.addColorStop(0, '#120718');
       barGrad.addColorStop(0.6, '#230e2c');
       barGrad.addColorStop(1, '#0d0512');
       ctx.fillStyle = barGrad; ctx.fillRect(0, 0, W, H);
 
-      // Prateleira de Garrafas ao Fundo (Bar Vibe)
       ctx.fillStyle = '#36183f'; ctx.fillRect(W * 0.1, H * 0.22, W * 0.8, 8);
       ctx.font = emojiFont(20); ctx.textAlign = 'center';
       ctx.fillText('🍾', W * 0.2, H * 0.21);
@@ -304,29 +281,24 @@ Game.addLevel(3, {
       ctx.fillText('🍹', W * 0.65, H * 0.21);
       ctx.fillText('🥂', W * 0.8, H * 0.21);
 
-      // Balcão do Bar em Madeira Rústica
       ctx.fillStyle = '#3b1c10'; ctx.fillRect(0, H * 0.58, W, H * 0.42);
       ctx.fillStyle = '#63311f'; ctx.fillRect(0, H * 0.56, W, 14); 
       ctx.fillStyle = '#9e4e30'; ctx.fillRect(0, H * 0.56, W, 3);
 
-      // Ambient Lighting Glow (Iluminação Quente no Encontro)
       const glow = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, 170);
       glow.addColorStop(0, 'rgba(255, 183, 77, 0.22)');
       glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
-      // Personagens & Bebidas
       ctx.font = emojiFont(52); ctx.textAlign = 'center';
       ctx.fillText('🧑🏽‍💼', W * 0.36, H * 0.54);
       ctx.fillText('👩🏼‍💼', W * 0.64, H * 0.54);
 
-      // Copos de Sangria
       ctx.font = emojiFont(28);
       ctx.fillText('🍹', W * 0.45, H * 0.56);
       ctx.fillText('🍹', W * 0.55, H * 0.56);
     }
 
-    // --- CENA 3: COMPLETO / OVERLAY RETRO LEVEL COMPLETE ---
     if (this.state === 'complete') {
       const progress = Math.min(1, this.timer * 1.5);
 
@@ -337,7 +309,6 @@ Game.addLevel(3, {
       ctx.save();
       ctx.globalAlpha = progress;
 
-      // Dimensões do Painel Retro
       const boxW = Math.min(W - 32, 340);
       const boxH = 290;
       const boxX = (W - boxW) / 2;
@@ -348,7 +319,6 @@ Game.addLevel(3, {
       roundRect(ctx, boxX, boxY, boxW, boxH, 10);
       ctx.fill();
 
-      // Moldura Dupla Dourada / Retro Arcade
       ctx.strokeStyle = '#ffe27a';
       ctx.lineWidth = 3;
       roundRect(ctx, boxX, boxY, boxW, boxH, 10);
@@ -370,7 +340,6 @@ Game.addLevel(3, {
       ctx.font = 'bold 18px ' + TEXT_FONT_STACK;
       ctx.fillText('LUV DESBLOQUEADO!', W / 2, boxY + 54);
 
-      // Cartão Central de Conquista Amorosa
       const cardW = boxW - 32;
       const cardH = 92;
       const cardX = boxX + 16;
@@ -385,7 +354,6 @@ Game.addLevel(3, {
       roundRect(ctx, cardX, cardY, cardW, cardH, 8);
       ctx.stroke();
 
-      // Destaque do Coração (Garante cor branca neutra e opacidade total para a fonte de emoji)
       ctx.save();
       ctx.globalAlpha = progress;
       ctx.fillStyle = '#ffffff';

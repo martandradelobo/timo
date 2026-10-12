@@ -27,7 +27,7 @@
       {
         prompt: '🏖️ Onde prefere passar as férias de verão?',
         options: [
-          { label: 'A - Apanhar sol na Praia 🏖️', correct: true, msg: 'Exato! Mesmo sem saber nadar.' },
+          { label: 'A - Apanhar sol na Praia 🏖️', correct: true, msg: 'Ciertoo! Mesmo sem saber nadar.' },
           { label: 'B - Retiro nas Montanhas 🏔️', correct: false, msg: 'Muito bonito, mas não.' },
           { label: 'C - Maratona de Museus na Cidade 🏛️', correct: false, msg: 'Não. Muito calor para isso.' }
         ]
@@ -35,16 +35,16 @@
       {
         prompt: '👸🏼 Princesa da Disney preferida?',
         options: [
-          { label: 'A - Ariel 🧜‍♀️', correct: false, msg: 'Gosta, mas não é a favorita.' },
+          { label: 'A - Ariel 🧜‍♀️', correct: false, msg: 'Até gosta, mas não é a favorita.' },
           { label: 'B - Cinderella 👸🏼', correct: true, msg: 'Isso mesmo! Cinderelli Cinderelli!' },
           { label: 'C - Elsa ❄️', correct: false, msg: 'Não. Drama queen.' }
         ]
       },
       {
-        prompt: 'O snack preferido quando está triste?:',
+        prompt: 'Snack preferido quando está triste?',
         options: [
           { label: 'A - Pipocas 🍿', correct: false, msg: 'Só no cinema!' },
-          { label: 'B - Gelado 🍦', correct: false, msg: 'Bom para o Verão, mas não o favorito.' },
+          { label: 'B - Gelado 🍦', correct: false, msg: 'Bom, mas não é o favorito.' },
           { label: 'C - Chocolate 🍫', correct: true, msg: 'Bingo!' }
         ]
       }
@@ -200,7 +200,7 @@
           } else {
             this.score = Math.max(0, this.score - 10);
             Dialogue.start([
-              { speaker: 'OPS!', text: `Esse(a) ${item.name} ${item.emoji} pertence ao Tomás! (-10% Conhecimento)` }
+              { speaker: 'OPS!', text: `${item.name} ${item.emoji}: Claramente pertence ao Tomás! (-10% Conhecimento)` }
             ]);
           }
         }
@@ -374,7 +374,6 @@
       roundRect(ctx, cardX, cardY, cardW, cardH, 8);
       ctx.stroke();
 
-      // Emoji Render - Cor branca pura e alpha correto para evitar transparências indesejadas
       ctx.save();
       ctx.globalAlpha = progress;
       ctx.fillStyle = '#ffffff';

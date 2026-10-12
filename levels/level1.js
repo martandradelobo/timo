@@ -1,7 +1,5 @@
 /* ============================================================================
  * LEVEL 1 — FAMILY
- * Find Mom (florist fetch quest), Sofia+Bernardo (find Maki), Dad (driving
- * mini-game to Bonaparte). 4/4 family found -> level complete.
  * ==========================================================================*/
 (function(){
   const L = { id: 1 };
@@ -42,9 +40,8 @@
           this.obstacles.push({lane:(Math.random()*3)|0, y:-0.1, e:k[0]});
         }
         
-        // atualização dos obstáculos
         for(const o of this.obstacles){
-          o.y += dt*0.75; // Velocidade dos obstáculos aumentada de 0.55 para 0.75
+          o.y += dt*0.75;
           if(Math.abs(o.y-0.82)<0.06 && o.lane===this.lane && !o.done){
             o.done=true; 
             this.hit=0.5; 
@@ -103,7 +100,7 @@
     };
   }
 
-  // ---- arrival at Bonaparte (self-contained scene, never blank) -------------
+  // ---- arrival at Bonaparte -------------
 function arrivalScene(onDone){
     return {
       t: 0,
@@ -114,7 +111,6 @@ function arrivalScene(onDone){
       draw(ctx, g){
         const W = g.W, H = g.H;
 
-        // 1. Céu Dramático de Pôr do Sol / Twilight Gradient
         const sky = ctx.createLinearGradient(0, 0, 0, H);
         sky.addColorStop(0, '#100c2a');
         sky.addColorStop(0.45, '#3b1d40');
@@ -124,58 +120,50 @@ function arrivalScene(onDone){
         ctx.fillStyle = sky; 
         ctx.fillRect(0, 0, W, H);
 
-        // Estrelas / Brilho suave no céu
+        // Estrelas 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         for(let i=0; i<15; i++) {
           const sx = ((i * 97) % W), sy = ((i * 43) % (H * 0.45));
           ctx.fillRect(sx, sy, (i%2)+1, (i%2)+1);
         }
 
-        // Chão / Calçada à noite
+        // Chão 
         const groundY = H * 0.70;
         ctx.fillStyle = '#161219'; 
         ctx.fillRect(0, groundY, W, H - groundY);
-        // Linha de perspetiva do passeio
+
         ctx.fillStyle = '#2d2433';
         ctx.fillRect(0, groundY, W, 4);
 
-        // --- 2. O ESTRUTURAL DO PUB (BONAPARTE) ---
         const bw = 280, bh = 170;
         const bx = W/2 - bw/2, by = groundY - bh + 8;
 
-        // Glow ambiente do pub na calçada
         const floorGlow = ctx.createRadialGradient(W/2, groundY + 20, 10, W/2, groundY + 20, 180);
         floorGlow.addColorStop(0, 'rgba(255, 180, 70, 0.35)');
         floorGlow.addColorStop(1, 'rgba(255, 180, 70, 0)');
         ctx.fillStyle = floorGlow;
         ctx.fillRect(0, groundY, W, H - groundY);
 
-        // Paredes de Tijolo Escuro
         ctx.fillStyle = '#2a1a1f'; 
         roundRect(ctx, bx, by, bw, bh, 6); ctx.fill();
         
-        // Padrão de textura de tijolos suaves
         ctx.fillStyle = '#201317';
         for(let y = by + 30; y < by + bh; y += 12) {
           ctx.fillRect(bx, y, bw, 1);
         }
 
-        // --- 3. JANELAS E INTERIOR ACOLHEDOR ---
         const winW = 92, winH = 65, winY = by + 65;
         const win1X = bx + 22, win2X = bx + bw - winW - 22;
 
         const drawWindow = (wx, wy) => {
-          // Brilho dourado interno da janela
           const winGlow = ctx.createLinearGradient(wx, wy, wx, wy + winH);
           winGlow.addColorStop(0, '#ffe082');
           winGlow.addColorStop(1, '#ff9800');
           ctx.fillStyle = winGlow;
           roundRect(ctx, wx, wy, winW, winH, 4); ctx.fill();
 
-          // Moldura de Madeira Escura
           ctx.strokeStyle = '#150a08'; ctx.lineWidth = 4;
           roundRect(ctx, wx, wy, winW, winH, 4); ctx.stroke();
-          // Caixilhos
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(wx + winW/2, wy); ctx.lineTo(wx + winW/2, wy + winH);
@@ -185,31 +173,25 @@ function arrivalScene(onDone){
         drawWindow(win1X, winY);
         drawWindow(win2X, winY);
 
-        ctx.font = emojiFont(35); // Define o tamanho dos emojis para 40px
-        // Silhuetas / Personagens na Janela
-        ctx.fillStyle = '#2b1408'; // Cor de silhueta no calor da iluminação
+        ctx.font = emojiFont(35); 
+        ctx.fillStyle = '#2b1408'; 
         // Pai (Esquerda)
         ctx.fillText('🧓🏼', win1X + winW/2 - 30, winY + winH - 12);
-        // Tomás (Direita)
+        // TIMO (Direita)
         ctx.fillText('🧑🏽', win1X + winW/2 - 2, winY + winH - 12);
 
-        // --- 4. PORTA CENTRAL ---
         const doorW = 38, doorH = 75;
         const doorX = W/2 - doorW/2, doorY = by + bh - doorH;
         ctx.fillStyle = '#180d0d';
         roundRect(ctx, doorX, doorY, doorW, doorH, 2); ctx.fill();
         ctx.strokeStyle = '#3d231d'; ctx.lineWidth = 2;
         roundRect(ctx, doorX, doorY, doorW, doorH, 2); ctx.stroke();
-        // Vidro na porta com luz
         ctx.fillStyle = '#ffb74d';
         roundRect(ctx, doorX + 6, doorY + 10, doorW - 12, 28, 2); ctx.fill();
-        // Maçaneta
         ctx.fillStyle = '#ffd54f';
         ctx.fillRect(doorX + doorW - 8, doorY + 44, 3, 6);
 
-        // --- 5. TOLDO CLASSICO (AWNING) ---
         const awnY = by + 28, awnH = 22, awnW = bw + 16, awnX = bx - 8;
-        // Desenho de listras do toldo
         ctx.save();
         roundRect(ctx, awnX, awnY, awnW, awnH, 4); ctx.clip();
         ctx.fillStyle = '#7a1c1c'; ctx.fillRect(awnX, awnY, awnW, awnH);
@@ -222,7 +204,6 @@ function arrivalScene(onDone){
         }
         ctx.restore();
 
-        // --- 6. LETREIRO NEON "BONAPARTE" ---
         const signY = by - 10;
         // Moldura do Letreiro
         ctx.fillStyle = '#110a08';
@@ -230,7 +211,6 @@ function arrivalScene(onDone){
         ctx.strokeStyle = '#5a3825'; ctx.lineWidth = 2;
         roundRect(ctx, W/2 - 95, signY - 18, 190, 36, 6); ctx.stroke();
 
-        // Brilho Neon Efeito Pulsante
         const neonPulse = 0.8 + Math.sin(this.t * 4) * 0.2;
         ctx.shadowColor = '#ffb300';
         ctx.shadowBlur = 12 * neonPulse;
@@ -241,22 +221,18 @@ function arrivalScene(onDone){
         ctx.fillText('BONAPARTE', W/2, signY + 6);
         ctx.shadowBlur = 0; // Reset da sombra
 
-        // Caneca de Cerveja Decora o Topo
         ctx.font = emojiFont(24);
         ctx.fillText('🍺', W/2, signY - 24);
 
-        // --- 7. CAIXA DE DIÁLOGO E INTERFACE ---
         const boxW = Math.min(420, W - 40), boxH = 68;
         const boxX = W/2 - boxW/2, boxY = H - 85;
 
-        // Fundo translúcido com gradiente elegante
         const dlgBg = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
         dlgBg.addColorStop(0, 'rgba(20, 16, 28, 0.95)');
         dlgBg.addColorStop(1, 'rgba(10, 8, 15, 0.98)');
         ctx.fillStyle = dlgBg;
         roundRect(ctx, boxX, boxY, boxW, boxH, 10); ctx.fill();
 
-        // Borda Dourada Neon Suave
         ctx.strokeStyle = '#ffb74d'; 
         ctx.lineWidth = 1.5; 
         roundRect(ctx, boxX, boxY, boxW, boxH, 10); ctx.stroke();
@@ -280,7 +256,7 @@ function arrivalScene(onDone){
     };
 }
 
-  // ---- Maki catch mini choice (Mission 2) -----------------------------------
+  // ---- Maki catch mini choice  -----------------------------------
   function makiEncounter(makiEnt){
     Dialogue.start([
       {speaker:'', text:'🐕 A Maki está a olhar para ti. Cauda a abanar. Zero intenção de obedecer.'},
@@ -310,14 +286,14 @@ function arrivalScene(onDone){
 
   // ---- interactions ---------------------------------------------------------
   function interact(e){
-    if(e.tag==='home'){ Dialogue.say('','🏠 Casinha onde as minhas coisas estão todas organizadinhas no sítio certo.'); return; }
+    if(e.tag==='home'){ Dialogue.say('','🏠 Não está ninguém em casa...'); return; }
 
     if(e.tag==='mom'){
       if(found.mom) { Dialogue.say('MUM','Meu filhinho ❤️'); return; }
       if(Game.flag('has_flowers')){
         Game.flag('has_flowers', false); flowerFollow=null;
         Dialogue.start([
-          {speaker:'TOMÁS', text:'Aqui estão!'},
+          {speaker:'TIMO', text:'Aqui estão!'},
           {speaker:'MUM', text:'Obrigada, só coisas boas meus amores 🥂❤️'},
         ], ()=>markFound('mom','Mom'));
       } else if(Game.flag('mom_quest')){
@@ -326,8 +302,8 @@ function arrivalScene(onDone){
         Game.flag('mom_quest', true);
         quest = 'A mum quer flores - visita a 🌸 Florista.';
         Dialogue.start([
-          {speaker:'MUM', text:'Tomás! Meu filhinho mais lindo!!!!!'},
-          {speaker:'TOMÁS', text:'Olá minha Mum!'},
+          {speaker:'MUM', text:'Meu filhinho mais lindo!!!!!'},
+          {speaker:'TIMO', text:'Olá minha Mum!'},
           {speaker:'MUM', text:'Podias fazer-me um favor...'},
           {speaker:'MUM', text:'🌷 Trazes-me flores?'},
         ]);
@@ -339,13 +315,13 @@ function arrivalScene(onDone){
       if(Game.flag('mom_quest') && !Game.flag('has_flowers') && !found.mom){
         Game.flag('has_flowers', true);
         Dialogue.start([
-          {speaker:'TOMÁS', text:'Olá, queria este ramo de flores, por favor.'},
+          {speaker:'TIMO', text:'Olá, queria este ramo de flores, por favor.'},
           {speaker:'FLORISTA', text:'Aqui tem, obrigada!'},
         ], ()=>{ Toast.show('🌷 FLORES JÁ CÁ CANTAM', 2.6);
                  flowerFollow={x:player.x,y:player.y+18};
                  quest='Leva as flores à Mum.'; });
       } else {
-        Dialogue.say('FLORISTA','As flores aqui estão sempre frescas!');
+        Dialogue.say('FLORISTA','💐 Florista. Aberto!');
       }
       return;
     }
@@ -363,7 +339,7 @@ function arrivalScene(onDone){
         Dialogue.say('SOFIA','Por favor, encontra a Maki! Ela fugiu para algum lado.');
       } else {
         Game.flag('maki_quest', true);
-        quest='Encontra a Maki 🐕 (ela está solta no mapa).';
+        quest='Encontra a Maki 🐕 (ela anda solta por aí).';
         Dialogue.start([
           {speaker:'SOFIA', text:'Viste a Maki?'},
           {speaker:'BERNARDO', text:'Ela estava literalmente aqui há dois segundos.'},
@@ -374,7 +350,7 @@ function arrivalScene(onDone){
     }
 
     if(e.tag==='maki'){
-      if(!Game.flag('maki_quest')){ Dialogue.say('','🐕 Um cão feliz. Parece pertencer a alguém.'); return; }
+      if(!Game.flag('maki_quest')){ Dialogue.say('','🐕 Um cãozinho lindíssimo. Parece pertencer a alguém.'); return; }
       if(!Game.flag('maki_party')) makiEncounter(e);
       return;
     }
@@ -383,7 +359,7 @@ function arrivalScene(onDone){
       if(found.dad){ Dialogue.say('PAPA','Então Tomás?'); return; }
       Dialogue.start([
         {speaker:'PAPA', text:'O que andas a fazer?'},
-        {speaker:'TOMÁS', text:'À tua procura.'},
+        {speaker:'TIMO', text:'À tua procura.'},
         {speaker:'PAPA', text:'Entra.'},
         {speaker:'', text:'🚗 VAMOS PARA O BONAPARTE'},
       ], ()=>{
@@ -442,7 +418,6 @@ function levelComplete() {
       roundRect(ctx, boxX + 6, boxY + 8, boxW, boxH, 16);
       ctx.fill();
 
-      // Fundo do Painel (Gradiente Azul/Violeta Profundo)
       const grad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
       grad.addColorStop(0, '#0f172a');
       grad.addColorStop(1, '#020617');
@@ -450,13 +425,11 @@ function levelComplete() {
       roundRect(ctx, boxX, boxY, boxW, boxH, 16);
       ctx.fill();
 
-      // Borda Externa Néon
       ctx.strokeStyle = '#22c55e';
       ctx.lineWidth = 2;
       roundRect(ctx, boxX, boxY, boxW, boxH, 16);
       ctx.stroke();
 
-      // Borda Interna Subtil (Brilho de vidro)
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.lineWidth = 1;
       roundRect(ctx, boxX + 3, boxY + 3, boxW - 6, boxH - 6, 13);
@@ -471,14 +444,14 @@ function levelComplete() {
       ctx.fill();
       ctx.fillStyle = '#4ade80';
       ctx.font = 'bold 11px monospace';
-      ctx.fillText('🎉 NÍVEL COMPLETO', W / 2, boxY + 33);
+      ctx.fillText('🎉 NÍVEL 1 CONCLUÍDO', W / 2, boxY + 33);
 
       // Título Dourado
       ctx.fillStyle = '#fbbf24';
       ctx.font = '900 18px monospace';
       ctx.fillText('FAMÍLIA ENCONTRADA', W / 2, boxY + 65);
 
-      // --- 4. GRELHA 2x2 DA FAMÍLIA (Resolve o problema do Bernardo) ---
+      // --- 4. GRELHA 2x2 DA FAMÍLIA ---
       const family = [
         { name: 'Mum', emoji: '👩🏽' },
         { name: 'Papa', emoji: '🧓🏼' },
@@ -528,7 +501,6 @@ function levelComplete() {
         ctx.fillText('✓', cx + cardW - 18, cy + 21);
       });
 
-      // --- 5. MENSAGEM NARRATIVA ---
       if (this.t > 0.8) {
         ctx.globalAlpha = Math.min(1, (this.t - 0.8) * 2);
         ctx.textAlign = 'center';
@@ -549,7 +521,6 @@ function levelComplete() {
         ctx.fillText('Mas ainda há pessoas à tua espera...', W / 2, boxY + 220);
       }
 
-      // --- 6. BOTÃO CONTINUAR ---
       if (this.t > 1.6) {
         const pulse = Math.sin(this.t * 5) * 0.2 + 0.8;
         ctx.globalAlpha = pulse;
@@ -596,8 +567,6 @@ function levelComplete() {
   L.enter = function(game){
     world = new World(30, 22);
 
-    // --- 1. TERRENO E ESTRADAS ---
-    // Paleta de terreno estilo RPG retro
     const roadColor = '#8c765c', roadEdge = '#5c4a38', plazaColor = '#9e876b';
     const grassAlt1 = '#3a663b', grassAlt2 = '#2e542f';
 
@@ -619,14 +588,12 @@ function levelComplete() {
       world.paint[x+',10'] = roadEdge;  world.paint[x+',12'] = roadEdge; 
     }
 
-    // Praça central acolhedora com calçada rica
     for(let y=9; y<=13; y++){
       for(let x=12; x<=17; x++){
         world.paint[x+','+y] = plazaColor;
       }
     }
 
-    // Caminhos de pedra a ligar as portas das casas à estrada principal
     const connectPath = (x1, y1, x2, y2) => {
       for(let x = Math.min(x1,x2); x <= Math.max(x1,x2); x++) {
         for(let y = Math.min(y1,y2); y <= Math.max(y1,y2); y++) {
@@ -644,14 +611,12 @@ function levelComplete() {
     quest = 'Encontra a tua família — 4 membros estão espalhados por aí.';
     found = { mom:!!game.flag('found_mom'), dad:!!game.flag('found_dad'), sofia:!!game.flag('found_sofia') };
 
-    // Função de criação de edifícios com estilo renovado
     function building(tx, ty, tw, th, color, roof, label, emoji) {
       world.block(tx, ty, tw, th);
       const x = tx * TILE, y = ty * TILE, w = tw * TILE, h = th * TILE;
       world.add({ box: true, x, y, w, h, color, roof, label, emoji });
     }
 
-    // --- 3. EDIFÍCIOS (Cores Mais Harmoniosas) ---
     // Sofia + Bernardo (Norte)
     building(18, 1, 7, 4, '#32334a', '#3c529c', 'SOFIA + BERNARDO', '👩🏻🧑🏻');
     world.add({ tag: 'sofiabernardo', interact: true, x: (18 + 7 / 2) * TILE - TILE / 2, y: 4.5 * TILE - 6, w: TILE, h: TILE, emoji: '' });
@@ -660,7 +625,7 @@ function levelComplete() {
     building(3, 3, 6, 4, '#3d5c44', '#529457', 'DES AUTRES', '👩🏽');
     world.add({ tag: 'mom', interact: true, x: (3 + 6 / 2) * TILE - TILE / 2, y: 6.5 * TILE - 6, w: TILE, h: TILE, emoji: '' });
 
-    // Tomás' house — HOME (Sudoeste)
+    // TIMO' house — HOME (Sudoeste)
     building(4, 13, 4, 4, '#3d344d', '#7b5294', 'HOME', '🏠');
     world.add({ tag: 'home', interact: true, x: (4 + 4 / 2) * TILE - TILE / 2, y: 16.5 * TILE - 6, w: TILE, h: TILE, emoji: '' });
 
@@ -675,7 +640,6 @@ function levelComplete() {
     building(24, 16, 5, 4, '#3b3827', '#a89d3b', 'BONAPARTE', '🍺');
     world.add({ tag: 'bonaparte', interact: true, x: (24 + 5 / 2) * TILE - TILE / 2, y: 19.5 * TILE - 6, w: TILE, h: TILE, emoji: ''});
 
-    // --- 4. SEGUIDORES & ANIMAIS ---
     if(!found.sofia){
       const maki=world.add({tag:'maki',interact:true,x:20*TILE,y:14*TILE,w:24,h:24,emoji:'🐕',name:'Maki',size:26,
                             _t:Math.random()*6, _ox:20*TILE,_oy:14*TILE});
@@ -685,7 +649,6 @@ function levelComplete() {
       world.entities=world.entities.filter(e=>e.tag!=='maki'); }
     if(game.flag('has_flowers')){ flowerFollow={x:player.x,y:player.y+18}; }
 
-    // --- 5. DECORAÇÕES E NATUREZA ABUNDANTE ---
     // Praça Central
     world.add({emoji:'⛲', x:14.2*TILE+8, y:11*TILE, w:28, h:28, size:40}); // Chafariz no centro
     world.add({emoji:'🪴', x:12.5*TILE, y:11*TILE, w:22, h:22, size:24});   // Banco esq.
@@ -720,7 +683,7 @@ function levelComplete() {
     world.add({emoji:'🚶🏼‍♀️', x:6*TILE, y:10*TILE, w:18, h:18, size:40});
 
 
-    Toast.show('QUEST 01 — ENCONTRA A TUA FAMÍLIA', 3.2);
+    Toast.show('🧑‍🧑‍🧒‍🧒 LEVEL 1 — FAM', 3.2);
   };
 
   L.update = function(dt, game){
@@ -736,7 +699,7 @@ function levelComplete() {
       makiFollow.x += (tx-makiFollow.x)*Math.min(1,dt*6);
       makiFollow.y += (ty-makiFollow.y)*Math.min(1,dt*6);
     }
-    // flowers held in hand — trail slightly behind
+    // flowers held in hand trail slightly behind
     if(flowerFollow){
       const tx=player.x + (player.dir==='left'?-14:14), ty=player.y-2;
       flowerFollow.x += (tx-flowerFollow.x)*Math.min(1,dt*10);
@@ -748,7 +711,6 @@ function levelComplete() {
   L.draw = function(ctx, game){
     renderWorld(ctx, world, player, game.W, game.H, {
       hud(ctx){
-        // Quest banner com visual Dark Glass & Gold Border
         if(quest){
           const qw = game.W - 20, qh = 42, qx = 10, qy = game.H - 52;
           ctx.fillStyle = 'rgba(16, 14, 26, 0.9)'; 
@@ -770,7 +732,7 @@ function levelComplete() {
         roundRect(ctx, cx, cy, cw, ch, 6); ctx.stroke();
 
         ctx.fillStyle = '#e8f5e9'; ctx.font = 'bold 13px ' + TEXT_FONT_STACK; 
-        ctx.fillText('👪 Família: ' + count + '/4', cx + 12, cy + 18);
+        ctx.fillText('👪 FAM: ' + count + '/4', cx + 12, cy + 18);
       }
     });
 

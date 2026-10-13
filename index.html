@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧑🏽</text></svg>">
 <title>TIMO - THE QUEST</title>
+
 <style>
   html, body {
     margin: 0;
@@ -258,6 +259,15 @@
 <script src="levels/level12.js"></script>
 
 <script>
+  // Bloqueio de dispositivos móveis executado imediatamente
+  (function checkMobile() {
+    const ehTelemovel = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    if (ehTelemovel) {
+      document.body.innerHTML = "<div style='background:#111; color:white; font-family:sans-serif; text-align:center; padding-top:20vh; height:100vh;'><h1>Timo The Quest é exclusivo para computadores.</h1><p>Por favor, aceda através de um PC.</p></div>";
+      throw new Error("Dispositivo móvel bloqueado.");
+    }
+  })();
+
   const canvas = document.getElementById('game');
   const title  = document.getElementById('title');
   const contBtn = document.getElementById('cont');
@@ -273,6 +283,17 @@
   const btnBackCredits = document.getElementById('btn-back-credits');
 
   let menuSelectedIndex = 0;
+
+  function showTitle() {
+    title.style.display = 'flex';
+    document.getElementById('hint').style.display = 'block';
+    checkSave();
+  }
+
+  function hideTitle() {
+    title.style.display = 'none';
+    document.getElementById('hint').style.display = 'none';
+  }
 
   function getActiveButtons() {
     let container = null;
@@ -318,6 +339,14 @@
   btnBackCredits.onclick = () => switchMenu(creditsMenu, mainMenu);
 
   window.addEventListener('keydown', (e) => {
+    // Tecla ESC para regressar ao Menu Principal durante o jogo
+    if (e.key === 'Escape') {
+      if (title.style.display === 'none') {
+        showTitle();
+        return;
+      }
+    }
+
     if (title.style.display === 'none') return;
 
     const k = e.key;
@@ -405,11 +434,6 @@
     }
     menuSelectedIndex = 0;
     updateMenuSelection();
-  }
-
-  function hideTitle() {
-    title.style.display = 'none';
-    document.getElementById('hint').style.display = 'none';
   }
 
   playBtn.onclick = () => {

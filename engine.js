@@ -18,12 +18,17 @@ function textFont(px, bold){ return (bold ? 'bold ' : '') + px + 'px ' + TEXT_FO
 /* ------------------------------------------------------------------ input */
 const Input = {
   keys: {},
-  pressed: {},                 // one-shot (consumed) presses
+  pressed: {},
   init() {
     window.addEventListener('keydown', e => {
       if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
       if (!this.keys[e.key]) this.pressed[e.key] = true;
       this.keys[e.key] = true;
+
+      // Atalho global de emergência para voltar ao menu com ESC
+if (e.key === 'Escape') {
+    window.location.href = 'index.html';
+  }
     });
     window.addEventListener('keyup', e => { this.keys[e.key] = false; });
   },
@@ -239,6 +244,7 @@ const Game = {
     Input.clear();
   }
 };
+
 
 /* ---------------------------------------------------------------- TileMap */
 class World {

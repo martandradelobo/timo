@@ -38,6 +38,9 @@
     }
 
     setTimeout(() => {
+      // Se entretanto saíste deste nível (ex: ESC -> selecionaste outro), não mostres este diálogo
+      const g = (typeof Game !== 'undefined') ? Game : window.Game;
+      if (g && g.current !== L) return;
       if (typeof Dialogue !== 'undefined' && Dialogue.say) {
         Dialogue.say('📜 QUEST', 'Toda a família e amigos estão reunidos! Usa as SETAS para apontar e [ESPAÇO] para rebentar os Balões 🎈!');
       }

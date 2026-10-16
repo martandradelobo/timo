@@ -43,12 +43,28 @@
     this.player.speed = 170;
     this.player.carriedItem = null;
 
-    // Sequência de ingredientes
+    // Sequência de ingredientes — cada um com o seu próprio desafio
     this.recipeSteps = [
-      { id: 'potato', name: 'Batatas', icon: '🥔' },
-      { id: 'carrot', name: 'Cenoura', icon: '🥕' },
-      { id: 'broccoli', name: 'Brócolos', icon: '🥦' },
-      { id: 'fish', name: 'Robalinho', icon: '🐟' }
+      {
+        id: 'potato', name: 'Batatas', icon: '🥔',
+        boardType: 'rhythm', rhythmSpeed: 105, rhythmZone: 24,
+        cookRate: 34, heatRate: 10
+      },
+      {
+        id: 'carrot', name: 'Cenoura', icon: '🥕',
+        boardType: 'rhythm', rhythmSpeed: 165, rhythmZone: 15,
+        cookRate: 36, heatRate: 12, stirMin: 6, stirMax: 9
+      },
+      {
+        id: 'broccoli', name: 'Brócolos', icon: '🥦',
+        boardType: 'mash', mashNeeded: 12, mashTime: 2.6,
+        cookRate: 38, heatRate: 13, stirMin: 4.5, stirMax: 7
+      },
+      {
+        id: 'fish', name: 'Robalinho', icon: '🐟',
+        boardType: 'rhythm', rhythmSpeed: 190, rhythmZone: 13,
+        cookRate: 36, heatRate: 9, stirMin: 3.5, stirMax: 5.5, needsFlip: true
+      }
     ];
 
     this.currentStepIdx = 0;
@@ -67,7 +83,13 @@
       potIngredient: null,
       potCookProgress: 0,
       potHeat: 0,
-      isReadyToServe: false
+      isReadyToServe: false,
+      cookPhase: 'sideA',     // 'sideA' | 'sideB' (só relevante p/ ingredientes com needsFlip)
+      stirTimer: null,        // tempo até ao próximo "MEXE!"
+      stirActive: false,
+      stirWindowTimer: 0,
+      flipReady: false,       // true quando é preciso virar (needsFlip)
+      flipWindowTimer: 0
     };
 
     // Estado do Mini-Jogo Rítmico de Corte
@@ -78,6 +100,17 @@
       targetStart: 40,
       targetEnd: 60
     };
+
+    // Estado do Mini-Jogo de Lavagem (amassar/bater ritmo rápido)
+    this.mashGame = {
+      presses: 0,
+      needed: 12,
+      timeLeft: 2.6,
+      totalTime: 2.6,
+      lastPressAt: -1
+    };
+
+    this.boardMinigameType = 'rhythm';
 
     this.feedbackMsg = 'Vai ao cesto dos legumes e clica [ESPAÇO]!';
     this.feedbackTimer = 4.0;
@@ -134,34 +167,48 @@
       return;
     }
 
-    // Lógica durante o Mini-jogo Rítmico de Corte
+    // Lógica durante o Mini-jogo da Tábua (ritmo OU lavagem, consoante o ingrediente)
     if (this.state === 'chopping_minigame' && (key === ' ' || key === 'Enter')) {
-      const pos = this.rhythmGame.cursorPos;
-      const tStart = this.rhythmGame.targetStart;
-      const tEnd = this.rhythmGame.targetEnd;
-
-      if (pos >= tStart && pos <= tEnd) {
-        const isPerfect = pos >= tStart + 5 && pos <= tEnd - 5;
-        const addProgress = isPerfect ? 45 : 30;
-        this.stationState.boardProgress += addProgress;
-        this.feedbackMsg = isPerfect ? '🎯 CORTE PERFEITO!' : '👍 BOM CORTE!';
-        this.feedbackTimer = 1.0;
+      if (this.boardMinigameType === 'mash') {
+        const now = this.timer;
+        const combo = (this.mashGame.lastPressAt >= 0 && (now - this.mashGame.lastPressAt) < 0.28);
+        this.mashGame.lastPressAt = now;
+        this.mashGame.presses++;
+        this.stationState.boardProgress += combo ? 13 : 9;
+        this.feedbackMsg = combo ? '🔥 COMBO!' : '🧽 A lavar!';
+        this.feedbackTimer = 0.6;
         this.feedbackIsError = false;
       } else {
-        this.stationState.boardProgress += 10;
-        this.feedbackMsg = '❌ FALHASTE O RITMO!';
-        this.feedbackTimer = 1.0;
-        this.feedbackIsError = true;
-      }
+        const pos = this.rhythmGame.cursorPos;
+        const tStart = this.rhythmGame.targetStart;
+        const tEnd = this.rhythmGame.targetEnd;
 
-      this.rhythmGame.targetStart = 20 + Math.random() * 50;
-      this.rhythmGame.targetEnd = this.rhythmGame.targetStart + 20;
+        if (pos >= tStart && pos <= tEnd) {
+          const zoneSize = tEnd - tStart;
+          const isPerfect = pos >= tStart + zoneSize * 0.3 && pos <= tEnd - zoneSize * 0.3;
+          const addProgress = isPerfect ? 45 : 30;
+          this.stationState.boardProgress += addProgress;
+          this.feedbackMsg = isPerfect ? '🎯 CORTE PERFEITO!' : '👍 BOM CORTE!';
+          this.feedbackTimer = 1.0;
+          this.feedbackIsError = false;
+        } else {
+          this.stationState.boardProgress += 10;
+          this.feedbackMsg = '❌ FALHASTE O RITMO!';
+          this.feedbackTimer = 1.0;
+          this.feedbackIsError = true;
+        }
+
+        const curStepR = this.recipeSteps[this.currentStepIdx];
+        const zoneW = (curStepR && curStepR.rhythmZone) || 20;
+        this.rhythmGame.targetStart = 15 + Math.random() * (80 - zoneW);
+        this.rhythmGame.targetEnd = this.rhythmGame.targetStart + zoneW;
+      }
 
       if (this.stationState.boardProgress >= 100) {
         this.stationState.boardProgress = 0;
         this.player.carriedItem.state = 'chopped';
         this.state = 'playing';
-        this.feedbackMsg = 'Ingrediente cortado! Leva ao TACHO no fogão.';
+        this.feedbackMsg = 'Ingrediente pronto! Leva ao TACHO no fogão.';
         this.feedbackTimer = 2.5;
         this.feedbackIsError = false;
       }
@@ -190,9 +237,27 @@
       // 2. Junto à TÁBUA DE CORTAR
       else if (Math.abs(pX - this.stations.board) < 40) {
         if (this.player.carriedItem && this.player.carriedItem.state === 'raw') {
+          this.boardMinigameType = currentStep.boardType || 'rhythm';
           this.state = 'chopping_minigame';
-          this.feedbackMsg = 'Clica [ESPAÇO] quando o marcador estiver no verde!';
-          this.feedbackTimer = 2.0;
+
+          if (this.boardMinigameType === 'mash') {
+            this.mashGame.presses = 0;
+            this.mashGame.needed = currentStep.mashNeeded || 12;
+            this.mashGame.totalTime = currentStep.mashTime || 2.6;
+            this.mashGame.timeLeft = this.mashGame.totalTime;
+            this.mashGame.lastPressAt = -1;
+            this.feedbackMsg = '🧽 Bate [ESPAÇO] bem depressa para lavar tudo!';
+          } else {
+            this.rhythmGame.cursorPos = 0;
+            this.rhythmGame.direction = 1;
+            this.rhythmGame.speed = currentStep.rhythmSpeed || 120;
+            const zoneW = currentStep.rhythmZone || 20;
+            this.rhythmGame.targetStart = 15 + Math.random() * (80 - zoneW);
+            this.rhythmGame.targetEnd = this.rhythmGame.targetStart + zoneW;
+            this.feedbackMsg = 'Clica [ESPAÇO] quando o marcador estiver no verde!';
+          }
+          this.stationState.boardProgress = 0;
+          this.feedbackTimer = 2.2;
           this.feedbackIsError = false;
         } else if (!this.player.carriedItem) {
           this.feedbackMsg = 'Vai buscar um ingrediente ao cesto primeiro!';
@@ -205,8 +270,32 @@
         if (this.player.carriedItem && this.player.carriedItem.state === 'chopped') {
           this.stationState.potIngredient = this.player.carriedItem;
           this.player.carriedItem = null;
-          this.feedbackMsg = 'A cozinhar no tacho! Atento para não queimar!';
+          this.stationState.cookPhase = 'sideA';
+          this.stationState.flipReady = false;
+          this.stationState.stirActive = false;
+          const sMin = currentStep.stirMin, sMax = currentStep.stirMax;
+          this.stationState.stirTimer = (sMin != null) ? (sMin + Math.random() * (sMax - sMin)) : null;
+          this.feedbackMsg = currentStep.needsFlip
+            ? 'A grelhar! Fica atento para VIRAR o peixe a meio!'
+            : 'A cozinhar no tacho! Atento para não queimar!';
           this.feedbackTimer = 2.5;
+          this.feedbackIsError = false;
+        } else if (this.stationState.stirActive) {
+          // Resposta ao pedido de "mexer"
+          this.stationState.stirActive = false;
+          this.stationState.potHeat = Math.max(0, this.stationState.potHeat - 16);
+          const sMin = currentStep.stirMin, sMax = currentStep.stirMax;
+          this.stationState.stirTimer = sMin + Math.random() * (sMax - sMin);
+          this.feedbackMsg = '🥄 Mexido!';
+          this.feedbackTimer = 1.0;
+          this.feedbackIsError = false;
+        } else if (this.stationState.flipReady) {
+          // Resposta ao pedido de "virar"
+          this.stationState.flipReady = false;
+          this.stationState.cookPhase = 'sideB';
+          this.stationState.potCookProgress = 0;
+          this.feedbackMsg = '🐟 Virado! A cozinhar o outro lado...';
+          this.feedbackTimer = 1.6;
           this.feedbackIsError = false;
         } else if (this.stationState.isReadyToServe && !this.player.carriedItem) {
           this.player.carriedItem = { ...this.stationState.potIngredient, state: 'cooked' };
@@ -214,6 +303,8 @@
           this.stationState.potCookProgress = 0;
           this.stationState.potHeat = 0;
           this.stationState.isReadyToServe = false;
+          this.stationState.stirActive = false;
+          this.stationState.flipReady = false;
 
           this.feedbackMsg = `${this.player.carriedItem.name} no ponto! Leva para o prato na MESA DE SERVIR!`;
           this.feedbackTimer = 2.5;
@@ -262,13 +353,24 @@
     this.timer += dt;
 
     if (this.state === 'chopping_minigame') {
-      this.rhythmGame.cursorPos += this.rhythmGame.direction * this.rhythmGame.speed * dt;
-      if (this.rhythmGame.cursorPos >= 100) {
-        this.rhythmGame.cursorPos = 100;
-        this.rhythmGame.direction = -1;
-      } else if (this.rhythmGame.cursorPos <= 0) {
-        this.rhythmGame.cursorPos = 0;
-        this.rhythmGame.direction = 1;
+      if (this.boardMinigameType === 'mash') {
+        this.mashGame.timeLeft -= dt;
+        if (this.mashGame.timeLeft <= 0) {
+          this.mashGame.timeLeft = this.mashGame.totalTime;
+          this.stationState.boardProgress = Math.max(0, this.stationState.boardProgress - 18);
+          this.feedbackMsg = '⏳ Mais depressa! Continua a bater!';
+          this.feedbackTimer = 1.0;
+          this.feedbackIsError = true;
+        }
+      } else {
+        this.rhythmGame.cursorPos += this.rhythmGame.direction * this.rhythmGame.speed * dt;
+        if (this.rhythmGame.cursorPos >= 100) {
+          this.rhythmGame.cursorPos = 100;
+          this.rhythmGame.direction = -1;
+        } else if (this.rhythmGame.cursorPos <= 0) {
+          this.rhythmGame.cursorPos = 0;
+          this.rhythmGame.direction = 1;
+        }
       }
     }
 
@@ -296,21 +398,71 @@
     }
 
     if (this.stationState.potIngredient) {
-      if (!this.stationState.isReadyToServe) {
-        this.stationState.potCookProgress += dt * 32;
-        this.stationState.potHeat += dt * 11;
+      const curStep = this.recipeSteps[this.currentStepIdx];
+      const cookRate = (curStep && curStep.cookRate) || 32;
+      const heatRate = (curStep && curStep.heatRate) || 11;
+      const ss = this.stationState;
 
-        if (this.stationState.potCookProgress >= 100) {
-          this.stationState.potCookProgress = 100;
-          this.stationState.isReadyToServe = true;
-          this.feedbackMsg = '✨ Está cozinhado! Retira do tacho com [ESPAÇO]!';
-          this.feedbackTimer = 3.0;
+      if (!ss.isReadyToServe) {
+        // --- Pedido de "mexer" (só para ingredientes com stirMin definido) ---
+        if (curStep && curStep.stirMin != null && !ss.flipReady) {
+          if (ss.stirActive) {
+            ss.stirWindowTimer -= dt;
+            if (ss.stirWindowTimer <= 0) {
+              ss.stirActive = false;
+              ss.potHeat += 18;
+              ss.stirTimer = curStep.stirMin + Math.random() * (curStep.stirMax - curStep.stirMin);
+              this.feedbackMsg = '🔥 Esqueceste-te de mexer!';
+              this.feedbackTimer = 1.6;
+              this.feedbackIsError = true;
+            }
+          } else if (ss.stirTimer != null) {
+            ss.stirTimer -= dt;
+            if (ss.stirTimer <= 0) {
+              ss.stirActive = true;
+              ss.stirWindowTimer = 1.3;
+            }
+          }
+        }
+
+        // --- Cozedura (com viragem a meio para ingredientes com needsFlip) ---
+        if (!ss.flipReady) {
+          ss.potCookProgress += dt * cookRate;
+          ss.potHeat += dt * heatRate;
+
+          if (ss.potCookProgress >= 100) {
+            ss.potCookProgress = 100;
+
+            if (curStep && curStep.needsFlip && ss.cookPhase === 'sideA') {
+              ss.flipReady = true;
+              ss.flipWindowTimer = 2.2;
+              this.feedbackMsg = '🐟 Hora de VIRAR! Vai ao tacho e prime [ESPAÇO]!';
+              this.feedbackTimer = 2.2;
+              this.feedbackIsError = false;
+            } else {
+              ss.isReadyToServe = true;
+              this.feedbackMsg = '✨ Está cozinhado! Retira do tacho com [ESPAÇO]!';
+              this.feedbackTimer = 3.0;
+            }
+          }
+        } else {
+          // À espera que o jogador vire o peixe
+          ss.flipWindowTimer -= dt;
+          if (ss.flipWindowTimer <= 0) {
+            ss.flipReady = false;
+            ss.cookPhase = 'sideB';
+            ss.potCookProgress = 0;
+            ss.potHeat += 20;
+            this.feedbackMsg = '🔥 Queimou de um lado! Continua a cozinhar o outro...';
+            this.feedbackTimer = 2.0;
+            this.feedbackIsError = true;
+          }
         }
       } else {
-        this.stationState.potHeat += dt * 28;
+        ss.potHeat += dt * 28;
       }
 
-      if (this.stationState.potHeat >= 100) {
+      if (ss.potHeat >= 100) {
         this.triggerPenalty('🔥 A comida queimou no tacho!');
       }
     }
@@ -327,6 +479,10 @@
       this.stationState.potCookProgress = 0;
       this.stationState.potHeat = 0;
       this.stationState.isReadyToServe = false;
+      this.stationState.cookPhase = 'sideA';
+      this.stationState.stirActive = false;
+      this.stationState.stirTimer = null;
+      this.stationState.flipReady = false;
       this.state = 'playing';
       this.feedbackMsg = `${reason} Perdeste 1 Vida! Tenta novamente.`;
       this.feedbackTimer = 3.2;
@@ -467,6 +623,32 @@
         ctx.fillStyle = this.stationState.potHeat > 70 ? '#ef4444' : '#f97316';
         roundRectLocal(ctx, barX, counterY - 54, barW * (this.stationState.potHeat / 100), 5, 2); ctx.fill();
       }
+
+      const curStepPot = this.recipeSteps[this.currentStepIdx];
+      if (curStepPot && curStepPot.needsFlip) {
+        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(this.stationState.cookPhase === 'sideA' ? 'LADO A' : 'LADO B', stP, counterY - 68);
+      }
+
+      // Pedido de "MEXE!"
+      if (this.stationState.stirActive) {
+        const pulse = 0.6 + Math.sin(this.timer * 14) * 0.4;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.95)'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('🥄 MEXE! [ESPAÇO]', stP, counterY - 76);
+        ctx.restore();
+      }
+
+      // Pedido de "VIRA!" (peixe)
+      if (this.stationState.flipReady) {
+        const pulse = 0.6 + Math.sin(this.timer * 16) * 0.4;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.95)'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('🔄 VIRA! [ESPAÇO]', stP, counterY - 76);
+        ctx.restore();
+      }
     }
 
     ctx.fillStyle = '#fef08a'; ctx.font = 'bold 10px monospace';
@@ -514,8 +696,8 @@
       }
     }
 
-    // 4. MINI-JOGO RÍTMICO DE CORTE (OVERLAY)
-    if (this.state === 'chopping_minigame') {
+    // 4. MINI-JOGO DA TÁBUA (ritmo OU lavagem, consoante o ingrediente)
+    if (this.state === 'chopping_minigame' && this.boardMinigameType !== 'mash') {
       const barW = 200;
       const barH = 20;
       const barX = (W - barW) / 2;
@@ -540,6 +722,41 @@
       const cursorX = barX + (barW * (this.rhythmGame.cursorPos / 100));
       ctx.fillStyle = '#facc15';
       ctx.fillRect(cursorX - 3, barY - 4, 6, barH + 8);
+    } else if (this.state === 'chopping_minigame' && this.boardMinigameType === 'mash') {
+      const barW = 200;
+      const barH = 20;
+      const barX = (W - barW) / 2;
+      const barY = H * 0.32;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      roundRectLocal(ctx, barX - 20, barY - 35, barW + 40, 95, 10); ctx.fill();
+      ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
+      roundRectLocal(ctx, barX - 20, barY - 35, barW + 40, 95, 10); ctx.stroke();
+
+      const mg = this.mashGame;
+      const shake = (Math.random() - 0.5) * 2;
+      ctx.save();
+      ctx.translate(shake, 0);
+      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
+      ctx.fillText('🧽 BATE [ESPAÇO] DEPRESSA!', W / 2, barY - 15);
+      ctx.restore();
+
+      // Barra de progresso (igual conceito à de corte, cor verde)
+      ctx.fillStyle = '#334155';
+      roundRectLocal(ctx, barX, barY, barW, barH, 6); ctx.fill();
+      ctx.fillStyle = '#4ade80';
+      roundRectLocal(ctx, barX, barY, barW * (this.stationState.boardProgress / 100), barH, 6); ctx.fill();
+
+      // Contador de toques
+      ctx.fillStyle = '#facc15'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
+      ctx.fillText(`${mg.presses} toques!`, W / 2, barY + barH + 16);
+
+      // Barra de tempo (reinicia se esgotar, sem perder vida)
+      const tPct = Math.max(0, mg.timeLeft / mg.totalTime);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      roundRectLocal(ctx, barX, barY + 30, barW, 6, 2); ctx.fill();
+      ctx.fillStyle = tPct < 0.3 ? '#ef4444' : '#38bdf8';
+      roundRectLocal(ctx, barX, barY + 30, barW * tPct, 6, 2); ctx.fill();
     }
 
     // 5. INTERFACE / HUD SUPERIOR
@@ -620,8 +837,8 @@
         ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace'; 
         const contentY = y + pad + 22;
         ctx.fillText('1. Pega nos ingredientes no Cesto 🧺', x + pad, contentY);
-        ctx.fillText('2. Corta-os na Tábua 🔪 no ritmo certo!', x + pad, contentY + 18);
-        ctx.fillText('3. Cozinha no Fogão 🍲 e serve no Prato 🍽️!', x + pad, contentY + 36);
+        ctx.fillText('2. Prepara-os na Tábua 🔪 — cada um tem o seu desafio!', x + pad, contentY + 18);
+        ctx.fillText('3. Cozinha no Fogão 🍲 (mexe e vira quando pedido!) e serve 🍽️', x + pad, contentY + 36);
 
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(12, true) : 'bold 12px monospace';

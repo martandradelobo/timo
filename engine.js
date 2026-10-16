@@ -216,6 +216,12 @@ const Game = {
 
   startLevel(id){
     this.overlay = null;
+    // Garante que nenhum diálogo (ou callback atrasado) de um nível anterior
+    // continua "ativo" e aparece por cima do nível que está a arrancar agora.
+    Dialogue.queue = [];
+    Dialogue.active = false;
+    Dialogue.line = null;
+    Dialogue.onDone = null;
     this.current = this.levels[id];
     this.state.level = id;
     this.save();

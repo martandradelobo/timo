@@ -39,6 +39,9 @@
 
     // Pequeno atraso para evitar que a tecla ESPAÇO vinda do Nível 10 feche o diálogo imediatamente
     setTimeout(() => {
+      // Se entretanto saíste deste nível (ex: ESC -> selecionaste outro), não mostres este diálogo
+      const g = (typeof Game !== 'undefined') ? Game : window.Game;
+      if (g && g.current !== L) return;
       if (typeof Dialogue !== 'undefined' && Dialogue.say) {
         Dialogue.say('📜 QUEST', 'O cinema está super escuro e um gelo! Precisas de apanhar Pipocas 🍿, uma Bebida 🥤 e um Casaco 🧥 para a Kiu antes de ires para o teu lugar! Usa [ESPAÇO] para apanhares os objetos.');
       }

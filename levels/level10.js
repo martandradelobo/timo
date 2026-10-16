@@ -499,7 +499,7 @@
         let name = 'Agenda';
         if (c.type === 'calendar') name = 'Calendário';
         if (c.type === 'postit') name = 'Post-it';
-        this.feedbackMsg = `📝 ${name} Organizado! (${this.checkpointsCollected}/${this.targetCheckpoints})`;
+        this.feedbackMsg = `📝 ${name} Check! (${this.checkpointsCollected}/${this.targetCheckpoints})`;
         this.feedbackIsError = false;
         this.feedbackTimer = 1.6;
       }
@@ -691,7 +691,7 @@
       if (sx < -30 || sx > W + 30) continue;
       const bob = Math.sin(this.timer * 4 + c.x) * 4;
       ctx.font = EF(22); ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
-      const icon = c.type === 'calendar' ? '📆' : c.type === 'postit' ? '📝' : '📅';
+      const icon = c.type === 'calendar' ? '📆' : c.type === 'postit' ? '📝' : '🗓️';
       ctx.fillText(icon, sx, c.y + bob);
     }
 
@@ -964,7 +964,7 @@
         ctx.fillText('1. [SETAS ESQ/DIR] para andar, [ESPAÇO ou CIMA] para saltar 🏃🏽‍➡️', x + pad, contentY);
         ctx.fillText('2. Salta POR CIMA das obras do metrobus 🚧 e das conversas de xaxa 🗣️ (pisa-os!)', x + pad, contentY + 16);
         ctx.fillText('3. Passa POR BAIXO das notificações 📱', x + pad, contentY + 32);
-        ctx.fillText('4. Foge da multidão 🚶🏽‍♂️‍➡️ e apanha as agendas 📅 e cafés ☕️!', x + pad, contentY + 48);
+        ctx.fillText('4. Foge da multidão 🚶🏽‍♂️‍➡️ e apanha as agendas 🗓️, post-its 📝 e cafés ☕️!', x + pad, contentY + 48);
 
         ctx.textAlign = 'right';
         ctx.fillStyle = '#ffe27a';
@@ -1039,7 +1039,7 @@
 
       ctx.font = EF(26);
       ctx.textAlign = 'center';
-      ctx.fillText('📅 📆 📝 ☕️ 🎬', W / 2, cardY + 34);
+      ctx.fillText('🗓️ 📝 ☕️ 🎬', W / 2, cardY + 34);
 
       ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 13px sans-serif';
       ctx.fillText('MESTRE DO PLANEAMENTO', W / 2, cardY + 58);

@@ -448,6 +448,8 @@
   }
 
   function friendsUnlocked() {
+    // Se entretanto saíste deste nível (ex: ESC -> selecionaste outro), não sobrepor o overlay
+    if (typeof Game !== 'undefined' && Game.current !== L) return;
     Game.setOverlay({
       t: 0,
       update(dt) {

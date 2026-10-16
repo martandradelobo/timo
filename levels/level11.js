@@ -40,7 +40,7 @@
     // Pequeno atraso para evitar que a tecla ESPAÇO vinda do Nível 10 feche o diálogo imediatamente
     setTimeout(() => {
       if (typeof Dialogue !== 'undefined' && Dialogue.say) {
-        Dialogue.say('QUEST', 'O cinema está super escuro e um gelo! Precisas de apanhar Pipocas 🍿, uma Bebida 🥤 e um Casaco 🧥 para a Kiu antes de ires para o teu lugar! Usa [ESPAÇO] para apanhares os objetos.');
+        Dialogue.say('📜 QUEST', 'O cinema está super escuro e um gelo! Precisas de apanhar Pipocas 🍿, uma Bebida 🥤 e um Casaco 🧥 para a Kiu antes de ires para o teu lugar! Usa [ESPAÇO] para apanhares os objetos.');
       }
     }, 150);
   };
@@ -309,8 +309,23 @@
     ctx.save();
 
     // 1. Fundo do Cinema
-    ctx.fillStyle = '#050714';
+    const bgGrad = ctx.createRadialGradient(W / 2, H * 0.4, 20, W / 2, H * 0.4, H * 0.9);
+    bgGrad.addColorStop(0, '#0b0f24');
+    bgGrad.addColorStop(1, '#030409');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
+
+    // Luzes de teto (apliques quentes ao longo do corredor superior)
+    for (let lx = 24; lx < W; lx += 58) {
+      const flicker = 0.5 + Math.sin(this.timer * 2 + lx * 0.3) * 0.15;
+      const lg = ctx.createRadialGradient(lx, this.offsetY - 6, 1, lx, this.offsetY - 6, 26);
+      lg.addColorStop(0, `rgba(255, 214, 140, ${flicker})`);
+      lg.addColorStop(1, 'rgba(255, 214, 140, 0)');
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.arc(lx, this.offsetY - 6, 26, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255, 224, 170, ${flicker + 0.2})`;
+      ctx.beginPath(); ctx.arc(lx, this.offsetY - 6, 2.4, 0, Math.PI * 2); ctx.fill();
+    }
 
     // Ecrã de Projeção na Parte Inferior (Em Baixo)
     let screenY = H - 32;
@@ -318,7 +333,7 @@
 
     // Feixe Luminoso de Projeção (de baixo para cima)
     let projGrad = ctx.createLinearGradient(W / 2, screenY, W / 2, 20);
-    projGrad.addColorStop(0, 'rgba(254, 240, 138, 0.12)');
+    projGrad.addColorStop(0, 'rgba(254, 240, 138, 0.14)');
     projGrad.addColorStop(1, 'rgba(254, 240, 138, 0.0)');
     ctx.fillStyle = projGrad;
     ctx.beginPath();
@@ -328,6 +343,25 @@
     ctx.lineTo(W / 2 - 40, 20);
     ctx.closePath();
     ctx.fill();
+
+    // Cortinas de veludo a enquadrar o ecrã
+    const curtainCols = ['#4c0519', '#7f1d3a', '#4c0519'];
+    [0, 1].forEach((side) => {
+      const baseX = side === 0 ? 0 : W;
+      const dir = side === 0 ? 1 : -1;
+      for (let i = 0; i < 3; i++) {
+        const cx = baseX + dir * (i * 11);
+        const cw = 34 - i * 4;
+        ctx.fillStyle = curtainCols[i % curtainCols.length];
+        ctx.beginPath();
+        ctx.moveTo(cx, screenY + 24);
+        ctx.quadraticCurveTo(cx + dir * cw * 0.6, screenY - 60, cx + dir * cw, 12);
+        ctx.lineTo(cx + dir * (cw + 10), 12);
+        ctx.quadraticCurveTo(cx + dir * (cw * 0.6 + 10), screenY - 54, cx + dir * 10, screenY + 26);
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
 
     // Moldura do Ecrã no Fundo
     ctx.fillStyle = `rgba(254, 240, 138, ${screenGlow * 0.9})`;
@@ -344,46 +378,97 @@
         let y = this.offsetY + r * this.tileH;
         let val = this.map[r][c];
 
-        if (val === 1) { // Poltronas
-          ctx.fillStyle = '#881337';
-          roundRect(ctx, x + 2, y + 2, this.tileW - 4, this.tileH - 4, 3); ctx.fill();
+        if (val === 1) { // Poltronas de cinema (encosto + apoios de braço)
+          const seatCx = x + this.tileW / 2;
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          roundRect(ctx, x + 3, y + this.tileH - 7, this.tileW - 6, 5, 2); ctx.fill();
+
+          ctx.fillStyle = '#6b0f26';
+          roundRect(ctx, x + 2, y + 6, this.tileW - 4, this.tileH - 8, 3); ctx.fill();
           ctx.fillStyle = '#9f1239';
-          roundRect(ctx, x + 5, y + 5, this.tileW - 10, this.tileH - 10, 2); ctx.fill();
-        } else if (val === 2) { // Pipocas no Chão
-          ctx.fillStyle = '#451a03';
+          roundRect(ctx, x + 4, y + 7, this.tileW - 8, this.tileH - 12, 2); ctx.fill();
+          // Encosto de cabeça
+          ctx.fillStyle = '#7f1d3a';
+          roundRect(ctx, seatCx - 7, y + 1, 14, 9, 3); ctx.fill();
+          // Apoios de braço
+          ctx.fillStyle = '#450a19';
+          ctx.fillRect(x + 1, y + 10, 3, this.tileH - 14);
+          ctx.fillRect(x + this.tileW - 4, y + 10, 3, this.tileH - 14);
+          // Brilho superior
+          ctx.fillStyle = 'rgba(255,255,255,0.08)';
+          ctx.fillRect(x + 5, y + 7, this.tileW - 10, 2);
+        } else if (val === 2) { // Pipocas entornadas / chão pegajoso
+          ctx.fillStyle = '#3a2410';
           roundRect(ctx, x + 2, y + 2, this.tileW - 4, this.tileH - 4, 3); ctx.fill();
-          ctx.fillStyle = '#fef08a'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText('👤', x + this.tileW / 2, y + this.tileH / 2 + 1);
-        } else if (val === 3) { // Homem Gordo
+          ctx.fillStyle = 'rgba(255, 220, 130, 0.12)';
+          ctx.beginPath(); ctx.ellipse(x + this.tileW / 2, y + this.tileH / 2 + 2, this.tileW / 2 - 4, this.tileH / 2 - 5, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('🍿', x + this.tileW / 2 - 6, y + this.tileH / 2 - 2);
+          ctx.fillText('🍿', x + this.tileW / 2 + 7, y + this.tileH / 2 + 4);
+        } else if (val === 3) { // Espectador a dormir (bloqueia o corredor, ressona)
           ctx.fillStyle = '#1e293b';
           roundRect(ctx, x + 2, y + 2, this.tileW - 4, this.tileH - 4, 4); ctx.fill();
-          ctx.fillStyle = '#38bdf8'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText('👤', x + this.tileW / 2, y + this.tileH / 2 + 1);
-        } else if (val === 0 || val === 4 || val === 5 || val === 6 || val === 7 || val === 8) { // Corredores & Objetos sem fundo
-          ctx.fillStyle = '#0f172a'; ctx.fillRect(x, y, this.tileW, this.tileH);
-          ctx.fillStyle = '#fbbf24'; ctx.fillRect(x + 1, y + this.tileH - 2, 2, 2);
+          ctx.fillStyle = '#334155';
+          roundRect(ctx, x + 4, y + 4, this.tileW - 8, this.tileH - 10, 3); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('😴', x + this.tileW / 2, y + this.tileH / 2 + 1);
+          const zBob = Math.sin(this.timer * 2 + x) * 2;
+          ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = 'rgba(148, 197, 255, 0.8)';
+          ctx.fillText('Z z', x + this.tileW / 2 + 9, y + 3 + zBob);
+        } else if (val === 0 || val === 4 || val === 5 || val === 6 || val === 7 || val === 8) { // Corredores & Objetos
+          // Carpete de cinema (padrão em losango subtil)
+          ctx.fillStyle = '#121233';
+          ctx.fillRect(x, y, this.tileW, this.tileH);
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.10)'; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x + this.tileW / 2, y); ctx.lineTo(x + this.tileW, y + this.tileH / 2);
+          ctx.lineTo(x + this.tileW / 2, y + this.tileH); ctx.lineTo(x, y + this.tileH / 2);
+          ctx.closePath(); ctx.stroke();
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
+          ctx.fillRect(x + 1, y + this.tileH - 2, 2, 2);
 
-          // Desenho dos Objetos Estáticos diretamente no chão
-          ctx.font = '15px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          
-          if (val === 5 && !this.hasPopcorn) {
-            ctx.fillText('🍿', x + this.tileW / 2, y + this.tileH / 2);
-          } else if (val === 6 && !this.hasDrink) {
-            ctx.fillText('🥤', x + this.tileW / 2, y + this.tileH / 2);
-          } else if (val === 7 && !this.hasSeatNumber) {
-            ctx.fillText('🎟️', x + this.tileW / 2, y + this.tileH / 2);
-          } else if (val === 8 && !this.hasJacket) {
-            ctx.fillText('🧥', x + this.tileW / 2, y + this.tileH / 2);
+          const isStand = (val === 5 || val === 6 || val === 7 || val === 8);
+          const stillNeeded =
+            (val === 5 && !this.hasPopcorn) || (val === 6 && !this.hasDrink) ||
+            (val === 7 && !this.hasSeatNumber) || (val === 8 && !this.hasJacket);
+
+          if (isStand && stillNeeded) {
+            const bob = Math.sin(this.timer * 3 + x * 0.2) * 2;
+            const cx = x + this.tileW / 2, cy = y + this.tileH / 2;
+
+            // Sombra simples por baixo do objeto (sem plataforma nem brilho)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(cx, y + this.tileH - 5, 8, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const icon = val === 5 ? '🍿' : val === 6 ? '🥤' : val === 7 ? '🎟️' : '🧥';
+            ctx.fillText(icon, cx, cy - 2 + bob);
           }
         }
       }
     }
 
-    // Destacar Cadeira L-18 após obter o bilhete
+    // Destacar Cadeira L-18 após obter o bilhete (holofote vindo do teto)
     if (this.hasSeatNumber) {
       let targetX = this.offsetX + this.targetSeat.col * this.tileW;
       let targetY = this.offsetY + this.targetSeat.row * this.tileH;
+      let cx = targetX + this.tileW / 2, cy = targetY + this.tileH / 2;
       let pulse = Math.sin(this.timer * 8) * 0.25 + 0.75;
+
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.moveTo(cx - 3, 0); ctx.lineTo(cx + 3, 0);
+      ctx.lineTo(cx + 16, cy); ctx.lineTo(cx - 16, cy);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
       ctx.strokeStyle = `rgba(251, 191, 36, ${pulse})`; ctx.lineWidth = 2;
       roundRect(ctx, targetX + 1, targetY + 1, this.tileW - 2, this.tileH - 2, 4); ctx.stroke();
     }
@@ -410,6 +495,8 @@
       let pos = (this.posHistory && this.posHistory[Math.min(delayIndex, this.posHistory.length - 1)]) || { x: this.player.x, y: this.player.y };
       let floatY = Math.sin(this.timer * 6 + i * 1.5) * 3;
 
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#ffffff';
       ctx.font = emojiFont(16);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -438,17 +525,52 @@
       ctx.fillStyle = lightGrad; ctx.fill();
     }
 
-    // 5. HUD Superior com Inventário em Tempo Real
+    // 5. HUD Superior em estilo "bilhete de cinema"
     ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
     roundRect(ctx, 10, 5, W - 20, 30, 6); ctx.fill();
     ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1;
     roundRect(ctx, 10, 5, W - 20, 30, 6); ctx.stroke();
 
-    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-    let invStr = `PIPOCAS: ${this.hasPopcorn ? '✅' : '❌'} | BEBIDA: ${this.hasDrink ? '✅' : '❌'} | CASACO: ${this.hasJacket ? '✅' : '❌'} | BILHETE: ${this.hasSeatNumber ? 'L-18 ✅' : '❌'}`;
-    ctx.fillText(invStr, 18, 24);
+    const chips = [
+      { icon: '🍿', on: this.hasPopcorn },
+      { icon: '🥤', on: this.hasDrink },
+      { icon: '🧥', on: this.hasJacket },
+      { icon: '🎟️', on: this.hasSeatNumber, label: this.hasSeatNumber ? 'L-18' : null }
+    ];
+    let chipX = 18;
+    ctx.textBaseline = 'middle';
+    for (const chip of chips) {
+      const chipW = chip.label ? 46 : 28;
+      ctx.fillStyle = chip.on ? 'rgba(74, 222, 128, 0.22)' : 'rgba(248, 113, 113, 0.16)';
+      roundRect(ctx, chipX, 11, chipW, 18, 5); ctx.fill();
+      ctx.strokeStyle = chip.on ? 'rgba(74, 222, 128, 0.6)' : 'rgba(248, 113, 113, 0.35)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, chipX, 11, chipW, 18, 5); ctx.stroke();
 
-    ctx.textAlign = 'right';
+      ctx.globalAlpha = chip.on ? 1 : 0.85;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = emojiFont(14); ctx.textAlign = 'left';
+      ctx.fillText(chip.icon, chipX + 4, 20);
+      ctx.globalAlpha = 1;
+
+      if (chip.label) {
+        ctx.fillStyle = '#86efac'; ctx.font = 'bold 8px monospace';
+        ctx.fillText(chip.label, chipX + 20, 20);
+      } else if (chip.on) {
+        ctx.fillStyle = '#86efac'; ctx.font = 'bold 9px monospace';
+        ctx.fillText('✓', chipX + 18, 20);
+      }
+      chipX += chipW + 6;
+    }
+
+    // Linha de perfuração estilo canhoto de bilhete
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.35)'; ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath(); ctx.moveTo(chipX + 2, 9); ctx.lineTo(chipX + 2, 31); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 10px monospace';
     ctx.fillText(inDarkZone ? '🔦 LANTERNA' : '🎬 SALA XVISION', W - 18, 24);
 
     // --- CENA 3: COMPLETO / OVERLAY RETRO LEVEL COMPLETE ---
@@ -458,6 +580,22 @@
       // Overlay de Fundo
       ctx.fillStyle = `rgba(16, 14, 26, ${0.9 * progress})`;
       ctx.fillRect(0, 0, W, H);
+
+      // Holofotes a varrer por trás do painel
+      const sweep = Math.sin(this.completeTimer * 0.8) * 0.4;
+      [-1, 1].forEach((side) => {
+        ctx.save();
+        ctx.globalAlpha = 0.12 * progress;
+        ctx.fillStyle = '#fef9c3';
+        ctx.beginPath();
+        ctx.moveTo(W / 2 + side * 20, H);
+        ctx.lineTo(W / 2 + side * 20 + (sweep + side * 0.5) * 260, 0);
+        ctx.lineTo(W / 2 + side * 20 + (sweep + side * 0.5) * 260 + 60, 0);
+        ctx.lineTo(W / 2 + side * 80, H);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
 
       ctx.save();
       ctx.globalAlpha = progress;

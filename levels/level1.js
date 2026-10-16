@@ -262,7 +262,7 @@ function arrivalScene(onDone){
       {speaker:'', text:'🐕 A Maki está a olhar para ti. Cauda a abanar. Zero intenção de obedecer.'},
       {prompt:'O que fazes?', choice:[
         {label:'Chamar a Maki',   cb:()=>makiResult(false,'Chamas. A Maki inclina a cabeça... e olha para outro lado. Clássico.')},
-        {label:'Oferecer comida',  cb:()=>makiResult(true, 'Comida. Claro. A Maki começa a andar ao teu lado instantaneamente. 🐕')},
+        {label:'Oferecer um brinquedo',  cb:()=>makiResult(true, 'Um brinquedo. Claro. A Maki começa a andar ao teu lado instantaneamente. 🐕')},
         {label:'Perseguir a Maki',  cb:()=>makiResult(false,'Persegues. A Maki pensa que é uma brincadeira e foge para longe. 💨')},
       ]}
     ]);

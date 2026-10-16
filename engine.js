@@ -1,8 +1,8 @@
 /* ============================================================================
- * TOMÁS: THE QUEST  —  engine.js
- * A tiny dependency-free 2D engine. Everything a level needs lives here so a
- * new level is just a data file that registers itself with Game.addLevel().
- * ==========================================================================*/
+- TOMÁS: THE QUEST  —  engine.js
+- A tiny dependency-free 2D engine. Everything a level needs lives here so a
+- new level is just a data file that registers itself with Game.addLevel().
+- ==========================================================================*/
 
 const TILE = 32;               // logical tile size
 const VIEW_W = 20;             // tiles visible horizontally
@@ -26,9 +26,27 @@ const Input = {
       this.keys[e.key] = true;
 
       // Atalho global de emergência para voltar ao menu com ESC
-if (e.key === 'Escape') {
-    window.location.href = 'index.html';
-  }
+      if (e.key === 'Escape') {
+        // Para e limpa qualquer música do Nível 9 ativa antes de sair
+        if (typeof L !== 'undefined' && L.bgMusic) {
+          L.bgMusic.pause();
+          L.bgMusic.currentTime = 0;
+          L.bgMusic.src = "";
+        }
+        if (window.level9MusicInstance) {
+          window.level9MusicInstance.pause();
+          window.level9MusicInstance.currentTime = 0;
+          window.level9MusicInstance.src = "";
+          window.level9MusicInstance = null;
+        }
+        document.querySelectorAll('audio').forEach(audio => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.src = "";
+        });
+
+        window.location.href = 'index.html';
+      }
     });
     window.addEventListener('keyup', e => { this.keys[e.key] = false; });
   },
@@ -136,6 +154,7 @@ const Toast = {
     ctx.globalAlpha = 1;
   }
 };
+
 
 /* -------------------------------------------------------------- draw utils */
 function roundRect(ctx,x,y,w,h,r){

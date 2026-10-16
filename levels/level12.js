@@ -39,7 +39,7 @@
 
     setTimeout(() => {
       if (typeof Dialogue !== 'undefined' && Dialogue.say) {
-        Dialogue.say('QUEST', 'Toda a família e amigos estão reunidos! Usa as SETAS ou RATO para apontar e [ESPAÇO] para rebentar os Balões 🎈!');
+        Dialogue.say('📜 QUEST', 'Toda a família e amigos estão reunidos! Usa as SETAS para apontar e [ESPAÇO] para rebentar os Balões 🎈!');
       }
     }, 150);
   };
@@ -66,15 +66,29 @@
     this.balloons = [];
     this.spawnTimer = 0;
 
-    // FASE 2: Velas Individuais com Desafio de Precisão e Manutenção
+    // FASE 2: Velas Individuais com Desafio de Precisão, Vento e Manutenção
     const cakeX = W / 2;
     const cakeY = H - 120;
-    this.candles = [
-      { id: 1, baseX: cakeX - 22, baseY: cakeY - 38, blown: false, holdTimer: 0 },
-      { id: 2, baseX: cakeX,       baseY: cakeY - 42, blown: false, holdTimer: 0 },
-      { id: 3, baseX: cakeX + 22, baseY: cakeY - 38, blown: false, holdTimer: 0 }
-    ];
-    this.cakeTimer = 10.0;
+    const candleCount = 7;
+    this.candles = [];
+    for (let i = 0; i < candleCount; i++) {
+      const t = (i - (candleCount - 1) / 2) / ((candleCount - 1) / 2); // -1..1
+      this.candles.push({
+        id: i + 1,
+        baseX: cakeX + t * 32,
+        baseY: cakeY - 44 - Math.pow(t, 2) * 6,
+        blown: false,
+        holdTimer: 0,
+        wanderAmp: 4 + Math.random() * 4,
+        wanderSpeed: 3 + Math.random() * 3,
+        wanderPhase: Math.random() * Math.PI * 2
+      });
+    }
+    this.cakeTimer = 16.0;
+    this.cakeTimerTotal = 16.0;
+    this.gustTimer = 3.5 + Math.random() * 1.5;
+    this.gustMsg = '';
+    this.gustMsgTimer = 0;
 
     // Letras das Bandeirolas no topo
     this.buntingLetters = ['P', 'A', 'R', 'A', 'B', 'É', 'N', 'S'];
@@ -92,13 +106,24 @@
       });
     }
 
+    // Luzinhas de fada nas paredes laterais
+    this.fairyLights = [];
+    for (let i = 0; i < 9; i++) {
+      this.fairyLights.push({ x: 14 + (i % 3) * 16, y: 50 + Math.floor(i / 3) * 46, side: 'left', phase: Math.random() * 10 });
+      this.fairyLights.push({ x: W - 14 - (i % 3) * 16, y: 50 + Math.floor(i / 3) * 46, side: 'right', phase: Math.random() * 10 });
+    }
+
+    // Confetti/flash de conclusão (gerado só quando o nível termina)
+    this.confetti = [];
+    this.completeFlash = 0;
+
     this.guestsTop = [
       { name: 'Mum', emoji: '👩🏽', outfit: '#ec4899', hat: '#facc15' },
       { name: 'Papá', emoji: '🧓🏼', outfit: '#3b82f6', hat: '#ef4444' },
       { name: 'Bernardo', emoji: '🧑🏻', outfit: '#10b981', hat: '#a855f7' },
-      { name: 'Sofia', emoji: '👩🏻', outfit: '#f59e0b', hat: '#06b6d4' },
+      { name: 'Maki', emoji: '🐶', outfit: '#f59e0b', hat: '#06b6d4' },
       { name: 'Bebé Totti', emoji: '👶🏼', outfit: '#38bdf8', hat: '#f43f5e', isBaby: true },
-      { name: 'Maki', emoji: '🐶', outfit: '#8b5cf6', hat: '#10b981' },
+      { name: 'Sofia', emoji: '👩🏻', outfit: '#8b5cf6', hat: '#10b981' },
       { name: 'Mia', emoji: '👩🏼', outfit: '#ec4899', hat: '#facc15' }
     ];
 
@@ -106,7 +131,7 @@
       { name: 'Dani', emoji: '👩🏾', outfit: '#a855f7', hat: '#f43f5e' },
       { name: 'Pinho', emoji: '👱🏻‍♂️', outfit: '#06b6d4', hat: '#ec4899' },
       { name: 'Félix', emoji: '🧑🏽', outfit: '#84cc16', hat: '#3b82f6' },
-      { name: 'Tomás', emoji: '🧑🏽', outfit: '#f43f5e', hat: '#👑', isHero: true, isTomás: true },
+      { name: 'Timo', emoji: '🧑🏽', outfit: '#f43f5e', hat: '#👑', isHero: true, isTomás: true },
       { name: 'Kiu', emoji: '👱🏼‍♀️', outfit: '#ec4899', hat: '#f59e0b', isHero: true },
       { name: 'Freitas', emoji: '👨🏽', outfit: '#10b981', hat: '#f43f5e' },
       { name: 'Hugo', emoji: '🧑🏻', outfit: '#6366f1', hat: '#facc15' },
@@ -200,6 +225,23 @@
     }
   };
 
+  L.spawnCompletionFX = function(W, H) {
+    this.completeFlash = 1.0;
+    const palette = ['#facc15', '#38bdf8', '#ff6b8b', '#7fd97f', '#ffffff', '#a855f7'];
+    for (let i = 0; i < 60; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 90 + Math.random() * 240;
+      this.confetti.push({
+        x: W / 2, y: H - 140,
+        vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - 180,
+        rot: Math.random() * Math.PI, rotV: (Math.random() - 0.5) * 10,
+        size: 4 + Math.random() * 5,
+        color: palette[i % palette.length],
+        life: 1.3 + Math.random() * 0.9
+      });
+    }
+  };
+
   L.triggerShoot = function(game) {
     const W = (game && game.W) ? game.W : 640;
     const H = (game && game.H) ? game.H : 480;
@@ -226,11 +268,12 @@
       if (this.poppedCount >= this.targetPopped) {
         this.state = 'cake_blow';
         this.stateTimer = 0;
-        this.cakeTimer = 10.0;
+        this.cakeTimer = this.cakeTimerTotal;
+        this.gustTimer = 3.5 + Math.random() * 1.5;
         this.crosshair.x = W / 2;
         this.crosshair.y = H - 140;
         if (typeof Dialogue !== 'undefined' && Dialogue.say) {
-          Dialogue.say('🎂 SOPRO DE PRECISÃO', 'Mantém a mira em cima de cada chama e SEGURA O [ESPAÇO] durante 0.7s para a apagar!');
+          Dialogue.say('🎂 SOPRO DE PRECISÃO', 'Mantém a mira em cima de cada chama e SEGURA O [ESPAÇO] durante 0.7s para a apagar! Cuidado — o vento pode reacender alguma que já tenhas apagado!');
         }
       }
     } else if (this.state === 'complete' && this.stateTimer > 0.6) {
@@ -329,15 +372,16 @@
 
     if (this.state === 'cake_blow') {
       this.cakeTimer -= dt;
+      if (this.gustMsgTimer > 0) this.gustMsgTimer -= dt;
 
       this.candles.forEach((c, idx) => {
         if (!c.blown) {
-          const flameX = c.baseX + Math.sin(this.timer * 6 + idx) * 3;
-          const flameY = c.baseY + Math.cos(this.timer * 8 + idx) * 2;
+          const flameX = c.baseX + Math.sin(this.timer * c.wanderSpeed + c.wanderPhase) * c.wanderAmp;
+          const flameY = c.baseY + Math.cos(this.timer * (c.wanderSpeed * 1.3) + c.wanderPhase) * (c.wanderAmp * 0.55);
 
           const dist = Math.hypot(flameX - this.crosshair.x, flameY - this.crosshair.y);
 
-          if (dist < 22 && this.keys.spaceHold) {
+          if (dist < 17 && this.keys.spaceHold) {
             c.holdTimer += dt;
             this.addPopParticles(flameX, flameY, '#38bdf8', 1);
 
@@ -352,15 +396,32 @@
         }
       });
 
+      // Rajada de vento ocasional: reacende uma vela já apagada (exceto perto do fim)
+      const blownCandles = this.candles.filter(c => c.blown);
+      const unblownCandles = this.candles.filter(c => !c.blown);
+      this.gustTimer -= dt;
+      if (this.gustTimer <= 0 && blownCandles.length > 0 && unblownCandles.length > 0 && this.cakeTimer > 2.5) {
+        const victim = blownCandles[Math.floor(Math.random() * blownCandles.length)];
+        victim.blown = false;
+        victim.holdTimer = 0;
+        this.addPopParticles(victim.baseX, victim.baseY, '#facc15', 10);
+        this.gustMsg = '💨 Uma corrente de ar reacendeu uma vela!';
+        this.gustMsgTimer = 2.0;
+        if (typeof Toast !== 'undefined' && Toast.show) Toast.show(this.gustMsg, 1.8);
+        this.gustTimer = 3.5 + Math.random() * 2.0;
+      }
+
       if (this.candles.every(c => c.blown)) {
         this.addPopParticles(W / 2, H - 120, '#facc15', 30);
         this.addPopParticles(W / 2, H - 120, '#4ade80', 30);
         this.state = 'complete';
         this.stateTimer = 0;
+        this.spawnCompletionFX(W, H);
       }
 
       if (this.cakeTimer <= 0) {
-        this.cakeTimer = 10.0;
+        this.cakeTimer = this.cakeTimerTotal;
+        this.gustTimer = 3.5 + Math.random() * 1.5;
         this.candles.forEach(c => { c.blown = false; c.holdTimer = 0; });
         if (typeof Toast !== 'undefined' && Toast.show) {
           Toast.show('🕯️ AS VELAS REACENDERAM! TENTA DE NOVO!', 2.0);
@@ -375,6 +436,15 @@
       p.alpha -= dt / p.life;
       if (p.alpha <= 0) this.particles.splice(i, 1);
     }
+
+    for (let i = this.confetti.length - 1; i >= 0; i--) {
+      const cf = this.confetti[i];
+      cf.vy += 420 * dt;
+      cf.x += cf.vx * dt; cf.y += cf.vy * dt; cf.rot += cf.rotV * dt;
+      cf.life -= dt;
+      if (cf.life <= 0) this.confetti.splice(i, 1);
+    }
+    if (this.completeFlash > 0) this.completeFlash = Math.max(0, this.completeFlash - dt * 2.2);
   };
 
   L.draw = function(ctx, game) {
@@ -384,7 +454,11 @@
 
     ctx.save();
 
-    ctx.fillStyle = '#0f172a';
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#0b1120');
+    bgGrad.addColorStop(0.6, '#161029');
+    bgGrad.addColorStop(1, '#2a1220');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
     let ceilingGlow = ctx.createRadialGradient(W / 2, 30, 10, W / 2, 30, 260);
@@ -392,6 +466,18 @@
     ceilingGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = ceilingGlow;
     ctx.fillRect(0, 0, W, H);
+
+    // Luzinhas de fada a tremeluzir nas paredes laterais
+    this.fairyLights.forEach(fl => {
+      const tw = 0.55 + Math.sin(this.timer * 3 + fl.phase) * 0.35;
+      const lg = ctx.createRadialGradient(fl.x, fl.y, 1, fl.x, fl.y, 14);
+      lg.addColorStop(0, `rgba(255, 214, 140, ${0.5 + tw * 0.4})`);
+      lg.addColorStop(1, 'rgba(255, 214, 140, 0)');
+      ctx.fillStyle = lg;
+      ctx.beginPath(); ctx.arc(fl.x, fl.y, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255, 236, 190, ${0.7 + tw * 0.3})`;
+      ctx.beginPath(); ctx.arc(fl.x, fl.y, 2, 0, Math.PI * 2); ctx.fill();
+    });
 
     this.bgConfetti.forEach(c => {
       ctx.fillStyle = c.color;
@@ -408,11 +494,23 @@
 
     ctx.fillStyle = '#78350f';
     roundRect(ctx, tableX, tableY, tableW, tableH, 10); ctx.fill();
+    // Veios de madeira
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+    for (let wy = tableY + 8; wy < tableY + tableH; wy += 7) {
+      ctx.beginPath(); ctx.moveTo(tableX + 4, wy); ctx.lineTo(tableX + tableW - 4, wy); ctx.stroke();
+    }
     ctx.strokeStyle = '#b45309'; ctx.lineWidth = 3;
     roundRect(ctx, tableX, tableY, tableW, tableH, 10); ctx.stroke();
 
     ctx.fillStyle = '#9f1239';
     ctx.fillRect(tableX + 35, tableY, tableW - 70, tableH);
+    // Padrão em losango subtil na toalha
+    ctx.strokeStyle = 'rgba(250, 204, 21, 0.18)'; ctx.lineWidth = 1;
+    for (let dx = tableX + 35; dx < tableX + tableW - 35; dx += 18) {
+      ctx.beginPath();
+      ctx.moveTo(dx, tableY); ctx.lineTo(dx + 9, tableY + tableH / 2);
+      ctx.lineTo(dx, tableY + tableH); ctx.stroke();
+    }
     ctx.strokeStyle = '#facc15'; ctx.lineWidth = 1.5;
     ctx.strokeRect(tableX + 35, tableY, tableW - 70, tableH);
 
@@ -443,6 +541,7 @@
       this.balloons.forEach(b => {
         if (!b.popped && b.y > -30) {
           ctx.save();
+          ctx.fillStyle = '#ffffff';
           ctx.font = emojiFont(b.size * 1.5);
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText('🎈', b.x, b.y);
@@ -505,7 +604,17 @@
       ctx.lineTo(fx + flagWidth / 2, fy + flagHeight);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
+
+      // Sombra subtil na metade inferior para dar volume
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.moveTo(fx + 4, fy + flagHeight * 0.45);
+      ctx.lineTo(fx + flagWidth - 4, fy + flagHeight * 0.45);
+      ctx.lineTo(fx + flagWidth / 2, fy + flagHeight);
+      ctx.closePath();
+      ctx.fill();
+
+      //ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px monospace';
@@ -519,11 +628,29 @@
       ctx.restore();
     });
 
+    if (this.completeFlash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.completeFlash * 0.75})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+
     if (this.state === 'complete') {
       const progress = Math.min(1, this.stateTimer * 1.5);
 
       ctx.fillStyle = `rgba(16, 14, 26, ${0.9 * progress})`;
       ctx.fillRect(0, 0, W, H);
+
+      // Confetti a cair sobre o fundo escurecido
+      for (const cf of this.confetti) {
+        const a = Math.max(0, Math.min(1, cf.life)) * progress;
+        if (a <= 0) continue;
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.translate(cf.x, cf.y);
+        ctx.rotate(cf.rot);
+        ctx.fillStyle = cf.color;
+        ctx.fillRect(-cf.size / 2, -cf.size / 2, cf.size, cf.size * 1.6);
+        ctx.restore();
+      }
 
       ctx.save();
       ctx.globalAlpha = progress;
@@ -608,9 +735,9 @@
     if (this.state === 'cake_blow') {
       targetingCandle = this.candles.find(c => {
         if (c.blown) return false;
-        const flameX = c.baseX + Math.sin(this.timer * 6) * 3;
-        const flameY = c.baseY + Math.cos(this.timer * 8) * 2;
-        return Math.hypot(flameX - cx, flameY - cy) < 22;
+        const flameX = c.baseX + Math.sin(this.timer * c.wanderSpeed + c.wanderPhase) * c.wanderAmp;
+        const flameY = c.baseY + Math.cos(this.timer * (c.wanderSpeed * 1.3) + c.wanderPhase) * (c.wanderAmp * 0.55);
+        return Math.hypot(flameX - cx, flameY - cy) < 17;
       });
     }
 
@@ -663,6 +790,7 @@
     let faceEmoji = g.emoji;
     if (isTomas && L.state === 'cake_blow') faceEmoji = '😮‍💨';
 
+    ctx.fillStyle = '#ffffff';
     ctx.font = emojiFont(isTomas ? 22 : (g.isBaby ? 16 : 19));
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -697,35 +825,65 @@
     ctx.save();
     ctx.translate(x, y);
 
-    ctx.fillStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.ellipse(0, 10, 36, 9, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Prato
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.ellipse(0, 13, 54, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath(); ctx.ellipse(0, 10, 52, 10, 0, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = '#f43f5e';
-    roundRect(ctx, -26, -8, 52, 18, 4); ctx.fill();
+    // Camada inferior (rosa) com goteira de cobertura
+    ctx.fillStyle = '#e11d48';
+    roundRect(ctx, -50, -10, 100, 20, 5); ctx.fill();
+    ctx.fillStyle = '#fb7185';
+    roundRect(ctx, -50, -10, 100, 7, 5); ctx.fill();
+    ctx.fillStyle = '#fda4af';
+    for (let i = -46; i <= 46; i += 11) {
+      ctx.beginPath(); ctx.arc(i, -3, 6, 0, Math.PI); ctx.fill();
+    }
 
+    // Camada superior (amarela)
+    ctx.fillStyle = '#eab308';
+    roundRect(ctx, -38, -34, 76, 26, 6); ctx.fill();
     ctx.fillStyle = '#fef08a';
-    roundRect(ctx, -20, -22, 40, 14, 4); ctx.fill();
+    roundRect(ctx, -38, -34, 76, 9, 6); ctx.fill();
+    ctx.fillStyle = '#fde68a';
+    for (let i = -34; i <= 34; i += 10) {
+      ctx.beginPath(); ctx.arc(i, -27, 4.5, 0, Math.PI); ctx.fill();
+    }
+
+    // Granulado colorido
+    const sprinkleColors = ['#f43f5e', '#38bdf8', '#4ade80', '#a855f7', '#facc15'];
+    for (let i = 0; i < 16; i++) {
+      const sx = -46 + (i * 37) % 92;
+      const sy = (i % 2 === 0) ? -4 + (i % 3) : -28 + (i % 3);
+      ctx.fillStyle = sprinkleColors[i % sprinkleColors.length];
+      ctx.fillRect(sx, sy, 2.5, 2.5);
+    }
 
     this.candles.forEach((c, idx) => {
       let relX = c.baseX - x;
       let relY = c.baseY - y;
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(relX - 2, relY, 4, 14);
+      ctx.fillStyle = idx % 2 === 0 ? '#38bdf8' : '#a855f7';
+      ctx.fillRect(relX - 2, relY, 4, 15);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillRect(relX - 2, relY, 1.3, 15);
 
       if (!c.blown) {
-        const flickX = Math.sin(this.timer * 6 + idx) * 3;
-        const flickY = Math.cos(this.timer * 8 + idx) * 2;
+        const flickX = Math.sin(this.timer * c.wanderSpeed + c.wanderPhase) * c.wanderAmp;
+        const flickY = Math.cos(this.timer * (c.wanderSpeed * 1.3) + c.wanderPhase) * (c.wanderAmp * 0.55);
 
+        ctx.fillStyle = 'rgba(249, 115, 22, 0.25)';
+        ctx.beginPath(); ctx.arc(relX + flickX, relY - 4 + flickY, 8, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(relX + flickX, relY - 4 + flickY, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(relX + flickX, relY - 5 + flickY, 3, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = '#facc15';
         ctx.beginPath(); ctx.arc(relX + flickX, relY - 4 + flickY, 1.8, 0, Math.PI * 2); ctx.fill();
       } else {
-        ctx.fillStyle = 'rgba(203, 213, 225, 0.6)';
-        ctx.beginPath(); ctx.arc(relX, relY - 4, 2, 0, Math.PI * 2); ctx.arc(relX + 1, relY - 8, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.5)';
+        ctx.beginPath(); ctx.arc(relX, relY - 4, 2, 0, Math.PI * 2); ctx.arc(relX + 1, relY - 9, 2.6, 0, Math.PI * 2); ctx.fill();
       }
     });
 

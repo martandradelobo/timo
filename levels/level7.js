@@ -1,7 +1,7 @@
 /* ============================================================================
- * TOMÁS: THE QUEST — LEVEL 7: A COZINHA DO ROBALINHO
- * Receita: Cesto 🧺 -> Tábua 🔪 (Rítmico) -> Fogão 🍲 -> Servir 🍽️ = 🍲
- * ==========================================================================*/
+- TOMÁS: THE QUEST — LEVEL 7: A COZINHA DO ROBALINHO
+- Receita: Cesto 🧺 -> Tábua 🔪 (Rítmico) -> Fogão 🍲 -> Servir 🍽️ = 🍲
+- ==========================================================================*/
 (function() {
   const L = { id: 7 };
 
@@ -30,6 +30,7 @@
 
   L.resetLevel = function(game) {
     this.state = 'intro_dialog'; // 'intro_dialog' | 'playing' | 'chopping_minigame' | 'chef_dialog' | 'complete' | 'gameover'
+    this.introStep = 1; // 1: Chef Mia, 2: Guia de Jogo (Quest)
     this.timer = 0;
     this.lives = 3;
     this.totalRecipeTime = 90.0;
@@ -40,7 +41,7 @@
     // Instância do Jogador
     this.player = new Player(W * 0.15, H * 0.60);
     this.player.speed = 170;
-    this.player.carriedItem = null; // { id, name, icon, state: 'raw'|'chopped'|'cooked' }
+    this.player.carriedItem = null;
 
     // Sequência de ingredientes
     this.recipeSteps = [
@@ -71,7 +72,7 @@
 
     // Estado do Mini-Jogo Rítmico de Corte
     this.rhythmGame = {
-      cursorPos: 0, // 0 a 100
+      cursorPos: 0,
       direction: 1,
       speed: 120,
       targetStart: 40,
@@ -101,9 +102,13 @@
       return;
     }
 
-    // Diálogo Inicial da Chef Mia -> Começar o Jogo
+    // Diálogos Iniciais divididos em 2 passos
     if (this.state === 'intro_dialog' && (key === ' ' || key === 'Enter')) {
-      this.state = 'playing';
+      if (this.introStep === 1) {
+        this.introStep = 2; // Passa para a segunda caixa (Quest/Guia)
+      } else if (this.introStep === 2) {
+        this.state = 'playing'; // Começa o jogo a sério
+      }
       return;
     }
 
@@ -115,7 +120,6 @@
     }
 
     if (this.state === 'complete' && (key === ' ' || key === 'Enter')) {
-      // Limpa os listeners do Nível 7 antes de mudar de nível
       if (this.boundKeyDown) {
         window.removeEventListener('keydown', this.boundKeyDown);
         window.removeEventListener('keyup', this.boundKeyUp);
@@ -137,7 +141,6 @@
       const tEnd = this.rhythmGame.targetEnd;
 
       if (pos >= tStart && pos <= tEnd) {
-        // Acerto perfeito/bom
         const isPerfect = pos >= tStart + 5 && pos <= tEnd - 5;
         const addProgress = isPerfect ? 45 : 30;
         this.stationState.boardProgress += addProgress;
@@ -145,18 +148,15 @@
         this.feedbackTimer = 1.0;
         this.feedbackIsError = false;
       } else {
-        // Falhou o ritmo
         this.stationState.boardProgress += 10;
-        this.feedbackMsg = '❌ FALHASTO O RITMO!';
+        this.feedbackMsg = '❌ FALHASTE O RITMO!';
         this.feedbackTimer = 1.0;
         this.feedbackIsError = true;
       }
 
-      // Re-sortear zona do alvo para a próxima tacada
       this.rhythmGame.targetStart = 20 + Math.random() * 50;
       this.rhythmGame.targetEnd = this.rhythmGame.targetStart + 20;
 
-      // Conclusão do corte
       if (this.stationState.boardProgress >= 100) {
         this.stationState.boardProgress = 0;
         this.player.carriedItem.state = 'chopped';
@@ -170,7 +170,6 @@
 
     if (this.state !== 'playing') return;
 
-    // Tecla de Ação [ESPAÇO] ou [ENTER]
     if (key === ' ' || key === 'Enter') {
       const pX = this.player.x;
       const currentStep = this.recipeSteps[this.currentStepIdx];
@@ -188,7 +187,7 @@
         }
       }
 
-      // 2. Junto à TÁBUA DE CORTAR (Inicia Mini-jogo Rítmico)
+      // 2. Junto à TÁBUA DE CORTAR
       else if (Math.abs(pX - this.stations.board) < 40) {
         if (this.player.carriedItem && this.player.carriedItem.state === 'raw') {
           this.state = 'chopping_minigame';
@@ -234,7 +233,6 @@
           this.player.carriedItem = null;
 
           if (this.currentStepIdx >= this.recipeSteps.length) {
-            // Todos os ingredientes entregues: Chef Mia aparece
             this.state = 'chef_dialog';
           } else {
             this.feedbackMsg = `✨ Empratado! Próximo ingrediente: ${this.recipeSteps[this.currentStepIdx].name}`;
@@ -249,7 +247,6 @@
       }
     }
 
-    // Tecla [5] para arrefecer o tacho
     if (key === '5') {
       if (this.stationState.potIngredient && this.stationState.potHeat > 0) {
         this.stationState.potHeat = Math.max(0, this.stationState.potHeat - 40);
@@ -264,7 +261,6 @@
     const W = game.W || 640;
     this.timer += dt;
 
-    // Atualização do cursor no mini-jogo rítmico
     if (this.state === 'chopping_minigame') {
       this.rhythmGame.cursorPos += this.rhythmGame.direction * this.rhythmGame.speed * dt;
       if (this.rhythmGame.cursorPos >= 100) {
@@ -286,7 +282,6 @@
       return;
     }
 
-    // Movimento do Tomás
     let moveDir = 0;
     if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) moveDir -= 1;
     if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) moveDir += 1;
@@ -300,7 +295,6 @@
       this.player.step = 0;
     }
 
-    // Processamento do Tacho
     if (this.stationState.potIngredient) {
       if (!this.stationState.isReadyToServe) {
         this.stationState.potCookProgress += dt * 32;
@@ -346,7 +340,7 @@
 
     ctx.save();
 
-    // ---------------- 1. CENÁRIO DA COZINHA ----------------
+    // 1. CENÁRIO DA COZINHA
     ctx.fillStyle = '#1f2937';
     ctx.fillRect(0, 0, W, H * 0.52);
 
@@ -375,7 +369,6 @@
       }
     }
 
-    // Balcão de Cozinha
     const counterY = H * 0.54;
     const counterH = 110;
 
@@ -392,10 +385,10 @@
     ctx.fillStyle = '#a1a1aa';
     ctx.fillRect(16, counterY + 12, W - 32, 4);
 
-    // ---------------- 2. ESTAÇÕES DE TRABALHO ----------------
+    // 2. ESTAÇÕES DE TRABALHO
     const curStep = this.recipeSteps[this.currentStepIdx];
 
-    // Estação 1: CESTO
+    // Cesto
     const stB = this.stations.baskets;
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath(); ctx.ellipse(stB, counterY - 2, 32, 8, 0, 0, Math.PI*2); ctx.fill();
@@ -412,7 +405,7 @@
     ctx.fillStyle = '#fef08a'; ctx.font = 'bold 10px monospace';
     ctx.fillText('1. CESTO', stB, counterY + 32);
 
-    // Estação 2: TÁBUA DE CORTAR
+    // Tábua
     const stBd = this.stations.board;
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath(); ctx.ellipse(stBd, counterY - 2, 35, 8, 0, 0, Math.PI*2); ctx.fill();
@@ -435,7 +428,7 @@
     ctx.fillStyle = '#fef08a'; ctx.font = 'bold 10px monospace';
     ctx.fillText('2. TÁBUA', stBd, counterY + 32);
 
-    // Estação 3: FOGÃO & TACHO
+    // Fogão
     const stP = this.stations.pot;
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath(); ctx.ellipse(stP, counterY - 2, 35, 8, 0, 0, Math.PI*2); ctx.fill();
@@ -479,7 +472,7 @@
     ctx.fillStyle = '#fef08a'; ctx.font = 'bold 10px monospace';
     ctx.fillText('3. FOGÃO', stP, counterY + 32);
 
-    // Estação 4: MESA DE SERVIR
+    // Servir
     const stS = this.stations.serve;
     ctx.fillStyle = 'rgba(0,0,0,0.2)';
     ctx.beginPath(); ctx.ellipse(stS, counterY - 2, 38, 8, 0, 0, Math.PI*2); ctx.fill();
@@ -499,7 +492,7 @@
     ctx.fillStyle = '#fef08a'; ctx.font = 'bold 10px monospace';
     ctx.fillText('4. SERVIR', stS, counterY + 32);
 
-    // ---------------- 3. PERSONAGEM (TOMÁS) ----------------
+    // 3. PERSONAGEM (TOMÁS)
     drawPlayer(ctx, this.player);
 
     if (this.player.carriedItem) {
@@ -521,7 +514,7 @@
       }
     }
 
-    // ---------------- 4. MINI-JOGO RÍTMICO DE CORTE (OVERLAY) ----------------
+    // 4. MINI-JOGO RÍTMICO DE CORTE (OVERLAY)
     if (this.state === 'chopping_minigame') {
       const barW = 200;
       const barH = 20;
@@ -549,7 +542,7 @@
       ctx.fillRect(cursorX - 3, barY - 4, 6, barH + 8);
     }
 
-    // ---------------- 5. INTERFACE / HUD SUPERIOR ----------------
+    // 5. INTERFACE / HUD SUPERIOR
     ctx.fillStyle = 'rgba(10, 12, 26, 0.9)';
     roundRectLocal(ctx, 16, 12, W - 32, 54, 10); ctx.fill();
     ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
@@ -566,7 +559,7 @@
     const stepTxt = curStep ? `OBJETIVO: ${curStep.name} (${this.currentStepIdx + 1}/4)` : 'PRATO PRONTO! 🍲';
     ctx.fillText(stepTxt, W - 280, 44);
 
-    // ---------------- 6. MENSAGENS DE FEEDBACK ----------------
+    // 6. MENSAGENS DE FEEDBACK
     if (this.feedbackTimer > 0 && this.state !== 'chef_dialog' && this.state !== 'intro_dialog') {
       ctx.textAlign = 'center';
       const boxW = Math.min(W - 60, ctx.measureText(this.feedbackMsg).width + 40);
@@ -585,46 +578,61 @@
     ctx.fillStyle = '#94a3b8'; ctx.font = '12px monospace'; ctx.textAlign = 'center';
     ctx.fillText('MOVER: [SETAS] / [A][D]  |  AÇÃO: [ESPAÇO]  |  ARREFECE FOGÃO: [5]', W / 2, H - 8);
 
-    // ---------------- 7. DIÁLOGOS DA CHEF MIA ----------------
-// 7a. Diálogo Inicial (Explicação)
+    // 7. DIÁLOGOS E QUEST (DIVIDIDOS EM 2 PASSOS)
     if (this.state === 'intro_dialog') {
-      // Fundo escuro do ecrã
       ctx.fillStyle = 'rgba(10, 12, 26, 0.65)';
       ctx.fillRect(0, 0, W, H);
 
-      // Dimensões e posicionamento idênticos ao Dialogue.draw
       const boxH = 132, pad = 18;
       const x = 16, w = W - 32;
       const y = H - boxH - 16;
 
-      // Caixa Retro do Diálogo
       ctx.fillStyle = 'rgba(10,12,26,0.92)';
       roundRectLocal(ctx, x, y, w, boxH, 10); ctx.fill();
       ctx.strokeStyle = '#8ad'; ctx.lineWidth = 3;
       roundRectLocal(ctx, x, y, w, boxH, 10); ctx.stroke();
 
-      // Nome do Speaker (Chef Mia) em Dourado
-      ctx.fillStyle = '#ffe27a'; 
-      ctx.font = typeof textFont === 'function' ? textFont(16, true) : 'bold 16px monospace'; ctx.textAlign = 'left';
-      ctx.fillText('  CHEF MIA 👩🏼‍🍳', x, y + pad + 4);
+      // PASSO 1: Fala da Chef Mia
+      if (this.introStep === 1) {
+        ctx.fillStyle = '#ffe27a'; 
+        ctx.font = typeof textFont === 'function' ? textFont(16, true) : 'bold 16px monospace'; 
+        ctx.textAlign = 'left';
+        ctx.fillText('CHEF MIA 👩🏼‍🍳', x + pad, y + pad + 4);
 
-      // Texto e Instruções em Branco
-      ctx.fillStyle = '#fff'; 
-      ctx.font = typeof textFont === 'function' ? textFont(14) : '14px monospace'; ctx.textAlign = 'left';
-      
-      const contentY = y + pad + 24;
-      ctx.fillText('   Olá Tomás! Hoje tens de surpreender a Kiu com um Robalinho!', x, contentY);
-      ctx.fillText('   1. Pega nos ingredientes no Cesto 🧺', x, contentY + 18);
-      ctx.fillText('   2. Corta-os na Tábua 🔪 no ritmo certo!', x, contentY + 34);
-      ctx.fillText('   3. Cozinha no Fogão 🍲 e serve no Prato 🍽️!', x, contentY + 50);
+        ctx.fillStyle = '#fff'; 
+        ctx.font = typeof textFont === 'function' ? textFont(14) : '14px monospace'; 
+        const contentY = y + pad + 28;
+        ctx.fillText('Olá Tomás! Hoje tens de surpreender a Kiu com um Robalinho!', x + pad, contentY);
 
-      // Indicador de Ação (Avançar) no canto inferior direito
-      ctx.fillStyle = '#9ab'; 
-      ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace';
-      ctx.fillText('␣ / Enter ▸', x + w - 100, y + boxH - 14);
+        ctx.fillStyle = '#ffe27a'; 
+        ctx.font = typeof textFont === 'function' ? textFont(12, true) : 'bold 12px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText('Pressiona [ ESPAÇO ] para continuar ➔', x + w - pad, y + boxH - 14);
+      } 
+      // PASSO 2: Guia de Jogo (📜 QUEST)
+      else if (this.introStep === 2) {
+        ctx.fillStyle = '#ffe27a'; 
+        ctx.font = typeof textFont === 'function' ? textFont(16, true) : 'bold 16px monospace'; 
+        ctx.textAlign = 'left';
+        ctx.fillText('📜 QUEST', x + pad, y + pad + 4);
+
+        ctx.fillStyle = '#fff'; 
+        ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace'; 
+        const contentY = y + pad + 22;
+        ctx.fillText('1. Pega nos ingredientes no Cesto 🧺', x + pad, contentY);
+        ctx.fillText('2. Corta-os na Tábua 🔪 no ritmo certo!', x + pad, contentY + 18);
+        ctx.fillText('3. Cozinha no Fogão 🍲 e serve no Prato 🍽️!', x + pad, contentY + 36);
+
+        ctx.fillStyle = '#ffe27a'; 
+        ctx.font = typeof textFont === 'function' ? textFont(12, true) : 'bold 12px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText('Pressiona [ ESPAÇO ] para começar!', x + w - pad, y + boxH - 14);
+      }
+
+      ctx.textAlign = 'left';
     }
 
-    // 7b. Diálogo Final (Elogio)
+    // Diálogo Final da Chef Mia (Elogio)
     if (this.state === 'chef_dialog') {
       ctx.fillStyle = 'rgba(10, 12, 26, 0.65)';
       ctx.fillRect(0, 0, W, H);
@@ -652,7 +660,7 @@
       ctx.fillText('Pressiona [ ESPAÇO ] para continuar...', dlgX + 85, dlgY + 92);
     }
 
-    // ---------------- 8. ECRÃS DE FIM DE JOGO ----------------
+    // 8. ECRÃS DE FIM DE JOGO
     if (this.state === 'gameover') {
       ctx.fillStyle = 'rgba(10, 12, 26, 0.88)';
       ctx.fillRect(0, 0, W, H);

@@ -50,7 +50,7 @@ Game.addLevel(3, {
         ctx.fillStyle = '#ffe27a'; ctx.font = 'bold 26px ' + TEXT_FONT_STACK;
         ctx.fillText('TO BE CONTINUED...', W / 2, H / 2 - 10);
         ctx.fillStyle = '#9ab'; ctx.font = '16px ' + TEXT_FONT_STACK;
-        ctx.fillText('Obrigado por jogares Tomás: The Quest!', W / 2, H / 2 + 24); 
+        ctx.fillText('Obrigado por jogares Timo: The Quest!', W / 2, H / 2 + 24); 
         ctx.textAlign = 'left'; 
       }
     });
@@ -69,7 +69,7 @@ Game.addLevel(3, {
 
     if (showIntro) {
       Dialogue.start([
-        { speaker: 'QUEST', text: 'FALA COM A KIU - O Tomás tem de tentar começar uma conversa.' },
+        { speaker: '📜 QUEST', text: 'FALA COM A KIU - O Tomás tem de tentar começar uma conversa.' },
         questionDialog
       ]);
     } else {
@@ -109,7 +109,7 @@ Game.addLevel(3, {
 
     if (showIntro) {
       Dialogue.start([
-        { speaker: '', text: 'ENCONTRO DESBLOQUEADO! Escolhe um plano para o primeiro encontro:' },
+        { speaker: '📜 QUEST', text: 'ENCONTRO DESBLOQUEADO! Escolhe um plano para o primeiro encontro:' },
         dateQuestionDialog
       ]);
     } else {
@@ -142,7 +142,7 @@ Game.addLevel(3, {
     Dialogue.start([
       { speaker: '', text: 'O Tomás e a Kiu encontram-se no Bocca para beber uma sangria...' },
       { speaker: 'KIU', text: 'Gostei muito, o próximo pago eu!' },
-      { speaker: 'TOMÁS', text: 'Eu também, fav girl.' }
+      { speaker: 'TOMÁS', text: 'Combinado, fav girl.' }
     ], () => {
       this.state = 'complete';
       this.timer = 0;

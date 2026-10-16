@@ -1,6 +1,6 @@
 /* ============================================================================
- * TOMÁS: THE QUEST — LEVEL 8: FRONTLINE
- * ==========================================================================*/
+- TOMÁS: THE QUEST — LEVEL 8: FRONTLINE
+- ==========================================================================*/
 (function() {
   const L = { id: 8 };
 
@@ -37,7 +37,8 @@
     this.distanceToStage = 100;
     this.vipPassesCollected = 0;
     this.targetVipPasses = 3;
-    this.gameOverReason = ''; // Guarda o motivo exato da derrota ('crowd' ou 'no_passes')
+    this.gameOverReason = ''; // Guarda o motivo exato da derrota ('crowd' or 'no_passes')
+    this.timeSinceLastVip = 0; // 🛡️ Controlo para garantir aparição garantida de bilhos
 
     const W = (game && game.W) ? game.W : 640;
     const H = (game && game.H) ? game.H : 480;
@@ -137,6 +138,7 @@
     const H = game.H || 480;
     this.timer += dt;
     this.stateTimer += dt;
+    this.timeSinceLastVip += dt;
 
     if (this.feedbackTimer > 0) this.feedbackTimer -= dt;
     if (this.state !== 'playing') return;
@@ -234,8 +236,15 @@
         });
       }
 
-      if (Math.random() < 0.5) {
-        const isVip = Math.random() < 0.4;
+      // 🛡️ LÓGICA GARANTIDA DE BILHOS: Se passaram 3 segundos sem aparecer bilho ou se faltam muitos para o fim, força o spawn!
+      const needsPassesUrgent = (this.targetVipPasses - this.vipPassesCollected) >= (this.distanceToStage / 25);
+      const forceVip = this.timeSinceLastVip > 3.0 || needsPassesUrgent;
+
+      if (forceVip || Math.random() < 0.6) {
+        const isVip = forceVip || (Math.random() < 0.55);
+        if (isVip) {
+          this.timeSinceLastVip = 0; // Reinicia o temporizador de garantia
+        }
         this.items.push({
           type: isVip ? 'vip' : 'cup',
           x: W + 20,
@@ -386,9 +395,6 @@
       ctx.beginPath();
       ctx.arc(s.x + s.width / 2, s.y + 6, 10, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.fillStyle = '#22c55e';
-      roundRectLocal(ctx, s.x, s.y, s.width, 6, 3); ctx.fill();
     }
 
     // ---------------- 3. OBSTÁCULOS ----------------
@@ -463,10 +469,9 @@
     ctx.fillStyle = 'rgba(0,0,0,0.8)';
     ctx.fillRect(0, H - 24, W, 24);
     ctx.fillStyle = '#94a3b8'; ctx.font = '12px monospace'; ctx.textAlign = 'center';
-    ctx.fillText('MOVER: [SETAS]  |  SALTAR / SUBIR NOS OMBROS: [ESPAÇO]', W / 2, H - 7);
+    ctx.fillText('MOVER: [SETAS]  |  SALTAR: [ESPAÇO]  |  BOOST: [ESPAÇO+SETA ->]', W / 2, H - 7);
 
     // ---------------- 7. DIÁLOGOS E FINAL ----------------
-    // 7a. Diálogo Inicial Dividido em 2 Cartões
     if (this.state === 'intro_dialog') {
       ctx.fillStyle = 'rgba(10, 12, 26, 0.65)';
       ctx.fillRect(0, 0, W, H);
@@ -480,12 +485,11 @@
       ctx.strokeStyle = '#8ad'; ctx.lineWidth = 3;
       roundRectLocal(ctx, x, y, w, boxH, 10); ctx.stroke();
 
-      // CARTÃO 1: Contexto da História
       if (this.introStep === 1) {
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(15, true) : 'bold 15px monospace';
         ctx.textAlign = 'left';
-        ctx.fillText('QUEST', x + pad, y + pad + 2);
+        ctx.fillText('📜 QUEST', x + pad, y + pad + 2);
 
         ctx.fillStyle = '#fff'; 
         ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace';
@@ -500,8 +504,6 @@
         ctx.font = typeof textFont === 'function' ? textFont(11, true) : 'bold 11px monospace';
         ctx.fillText('Pressiona [ ESPAÇO ] para continuar ➔', x + w - pad, y + boxH - 14);
       }
-
-      // CARTÃO 2: Regras & Instruções
       else if (this.introStep === 2) {
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(15, true) : 'bold 15px monospace';
@@ -518,7 +520,7 @@
 
         ctx.fillStyle = '#38bdf8';
         ctx.font = typeof textFont === 'function' ? textFont(10, true) : 'bold 10px monospace';
-        ctx.fillText('[SETAS] Andar  |  [ESPAÇO] Saltar / Subir para os Ombros', x + pad, contentY + 52);
+        ctx.fillText('[SETAS] Andar  |  [ESPAÇO] Saltar ', x + pad, contentY + 52);
 
         ctx.textAlign = 'right';
         ctx.fillStyle = '#ffe27a'; 
@@ -535,13 +537,11 @@
       ctx.textAlign = 'center';
 
       if (this.gameOverReason === 'no_passes') {
-        // Derrota por não recolher bilhetes suficientes
         ctx.fillText('🎟️ FALTAM BILHOS!', W / 2, H / 2 - 30);
         ctx.fillStyle = '#f87171';
         ctx.font = '14px monospace';
         ctx.fillText(`Apanhaste apenas ${this.vipPassesCollected}/${this.targetVipPasses} bilhos!`, W / 2, H / 2);
       } else {
-        // Derrota por perder as 3 vidas
         ctx.fillText('💥 PERDESTE-TE NA MULTIDÃO!', W / 2, H / 2 - 30);
         ctx.fillStyle = '#f87171';
         ctx.font = '14px monospace';
@@ -567,7 +567,6 @@
       ctx.save();
       ctx.globalAlpha = progress;
 
-      // Card Principal
       ctx.fillStyle = '#100e1a';
       roundRectLocal(ctx, boxX, boxY, boxW, boxH, 10); ctx.fill();
       ctx.strokeStyle = '#facc15'; ctx.lineWidth = 3;
@@ -580,7 +579,6 @@
       ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px ' + (typeof TEXT_FONT_STACK !== 'undefined' ? TEXT_FONT_STACK : 'sans-serif');
       ctx.fillText('CHEGASTE à FRONTLINE!', W / 2, boxY + 54);
 
-      // Sub-card
       const cardW = boxW - 32;
       const cardH = 90;
       const cardX = boxX + 16;
@@ -603,7 +601,17 @@
       ctx.fillStyle = '#7fd97f'; ctx.font = 'bold 11px monospace';
       ctx.fillText('✓ ENCONTRASTE A KIU NA PRIMEIRA FILA', W / 2, cardY + 78);
 
-      if (this.stateTimer > 0.6) {
+      if (this.timer > 0.6) {
+        ctx.fillStyle = '#d1d5db';
+        ctx.font = '12px ' + TEXT_FONT_STACK;
+        ctx.fillText('Conseguiste encontrá-la mesmo sendo tão', W / 2, boxY + 195);
+        ctx.fillText('pequenina!', W / 2, boxY + 215);
+        ctx.fillStyle = '#ffe27a';
+        ctx.font = 'italic 11px ' + TEXT_FONT_STACK;
+        ctx.fillText('Pronto para o próximo desafio?', W / 2, boxY + 235);
+      }
+
+      if (this.stateTimer > 1.2) {
         const btnPulse = Math.sin(this.timer * 6) * 0.2 + 0.8;
         ctx.globalAlpha = btnPulse;
         const btnW = 180, btnH = 28, btnX = W / 2 - btnW / 2, btnY = boxY + boxH - 40;

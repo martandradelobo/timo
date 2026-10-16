@@ -1,10 +1,19 @@
 /* ============================================================================
- * TOMÁS: THE QUEST — LEVEL 9: SILENTIDE GUITAR HERO EDITION
- * ==========================================================================*/
+- TOMÁS: THE QUEST — LEVEL 9: SILENTIDE GUITAR HERO EDITION
+- ==========================================================================*/
 (function() {
   const L = { id: 9 };
 
+  // Limpa instâncias antigas de áudio caso fiquem penduradas na memória
+  if (window.level9MusicInstance) {
+    window.level9MusicInstance.pause();
+    window.level9MusicInstance.currentTime = 0;
+    window.level9MusicInstance = null;
+  }
+
   L.bgMusic = new Audio('Chaos & Order.mp3');
+  L.bgMusic.loop = true;
+  window.level9MusicInstance = L.bgMusic;
 
   function roundRectLocal(ctx, x, y, width, height, radius) {
     if (width < 2 * radius) radius = width / 2;
@@ -125,7 +134,7 @@
 
     if (L.bgMusic) {
       L.bgMusic.pause();
-      L.bgMusic.currentTime = 90; // 1 min 30 seg
+      L.bgMusic.currentTime = 90; // 🛡️ Começa aos 1:30 (segundo 90)
     }
 
     if (typeof Toast !== 'undefined' && Toast.show) {
@@ -144,7 +153,7 @@
       this.noteSpeed = 220;
       this.hitWindow = 28;
       this.doubleNoteChance = 0.35;
-    } else { // medium
+    } else {
       this.spawnInterval = 0.55;
       this.noteSpeed = 180;
       this.hitWindow = 35;
@@ -153,8 +162,8 @@
   };
 
   L.resetLevel = function(game) {
-    this.state = 'intro_dialog'; // 'intro_dialog', 'playing', 'paused', 'complete', 'gameover'
-    this.introStep = 1; // 1: Contexto | 2: Instruções & Dificuldade
+    this.state = 'intro_dialog'; 
+    this.introStep = 1; 
     this.timer = 0;
     this.stateTimer = 0;
 
@@ -165,7 +174,7 @@
     this.showProgress = 0;
 
     this.lanes = [
-      { id: 0, key: '1', keyAlt: 'a', keyNav: 'ArrowLeft', color: '#ef4444', label: '1/A/←', name: 'Tomás' },
+      { id: 0, key: '1', keyAlt: 'a', keyNav: 'ArrowLeft', color: '#ef4444', label: '1/A/←', name: 'Timo' },
       { id: 1, key: '2', keyAlt: 's', keyNav: 'ArrowUp', color: '#38bdf8', label: '2/S/↑', name: 'Hugo' },
       { id: 2, key: '3', keyAlt: 'd', keyNav: 'ArrowDown', color: '#f59e0b', label: '3/D/↓', name: 'Freitas' },
       { id: 3, key: '4', keyAlt: 'f', keyNav: 'ArrowRight', color: '#a855f7', label: '4/F/→', name: 'Digga' }
@@ -178,6 +187,11 @@
     this.feedbackText = '';
     this.feedbackTimer = 0;
     this.feedbackColor = '#fff';
+
+    if (L.bgMusic) {
+      L.bgMusic.pause();
+      L.bgMusic.currentTime = 90;
+    }
 
     if (this.boundKeyDown) window.removeEventListener('keydown', this.boundKeyDown);
     if (this.boundClick) window.removeEventListener('click', this.boundClick);
@@ -199,16 +213,18 @@
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
 
-    // Clique no Botão de Pausa
     if (this.state === 'playing') {
       if (mx >= 15 && mx <= 95 && my >= 10 && my <= 38) {
         this.state = 'paused';
         this.stateTimer = 0;
+        if (L.bgMusic) {
+          L.bgMusic.pause();
+          L.bgMusic.currentTime = 90;
+        }
         return;
       }
     }
 
-    // Clique na Seleção de Dificuldade (Apenas no Passo 2 da Intro)
     if (this.state === 'intro_dialog' && this.introStep === 2) {
       const boxH = 132;
       const x = 16;
@@ -227,7 +243,6 @@
   L.handleKeyPress = function(key, game) {
     const k = key.toLowerCase();
 
-    // Pausa (Toggle)
     if ((k === 'p' || key === 'Escape') && (this.state === 'playing' || this.state === 'paused')) {
       this.state = (this.state === 'playing') ? 'paused' : 'playing';
       this.stateTimer = 0;
@@ -235,8 +250,9 @@
       if (L.bgMusic) {
         if (this.state === 'paused') {
           L.bgMusic.pause();
+          L.bgMusic.currentTime = 90;
         } else {
-          L.bgMusic.play();
+          L.bgMusic.play().catch(() => {});
         }
       }
       return;
@@ -248,13 +264,20 @@
       } else if ((key === ' ' || k === 'space' || key === 'Enter') && this.stateTimer > 0.2) {
         this.state = 'playing';
         this.stateTimer = 0;
-        if (L.bgMusic) L.bgMusic.play();
+        if (L.bgMusic) {
+          L.bgMusic.currentTime = 90;
+          L.bgMusic.play().catch(() => {});
+        }
       }
       return;
     }
 
     if (this.state === 'complete' || this.state === 'gameover') {
       if (this.stateTimer > 0.4 && (key === ' ' || k === 'space' || key === 'Enter')) {
+        if (L.bgMusic) {
+          L.bgMusic.pause();
+          L.bgMusic.currentTime = 90;
+        }
         if (this.state === 'complete') {
           if (this.boundKeyDown) window.removeEventListener('keydown', this.boundKeyDown);
           if (this.boundClick) window.removeEventListener('click', this.boundClick);
@@ -270,7 +293,6 @@
       return;
     }
 
-    // NAVEGAÇÃO NOS CARTÕES DA INTRO
     if (this.state === 'intro_dialog') {
       if (this.introStep === 1) {
         if ((key === ' ' || k === 'space' || key === 'Enter') && this.stateTimer > 0.25) {
@@ -281,7 +303,6 @@
       }
 
       if (this.introStep === 2) {
-        // Mudar dificuldade com setas Esquerda / Direita ou A / D
         if (key === 'ArrowLeft' || k === 'a') {
           if (this.difficulty === 'hard') this.difficulty = 'medium';
           else if (this.difficulty === 'medium') this.difficulty = 'easy';
@@ -299,9 +320,10 @@
           this.state = 'playing';
           this.stateTimer = 0;
 
+          // 🛡️ Arranca a música exatamente aos 1:30 (segundo 90) ao fechar as instruções
           if (L.bgMusic) {
             L.bgMusic.currentTime = 90;
-            L.bgMusic.play();
+            L.bgMusic.play().catch(err => console.log("Autoplay bloqueado pelo browser:", err));
           }
         }
         return;
@@ -369,6 +391,7 @@
     if (this.state === 'paused' || this.state === 'gameover' || this.state === 'complete' || this.state === 'intro_dialog') {
       if (this.state !== 'intro_dialog' && L.bgMusic && !L.bgMusic.paused) {
         L.bgMusic.pause();
+        L.bgMusic.currentTime = 90;
       }
       return;
     }
@@ -376,18 +399,19 @@
     const H = game.H || 480;
     const targetY = H - 70;
 
-    // Progresso (Vitória)
     this.showProgress += dt * 3.5;
     if (this.showProgress >= 100) {
       this.showProgress = 100;
       this.state = 'complete';
       this.stateTimer = 0;
 
-      if (L.bgMusic) L.bgMusic.pause();
+      if (L.bgMusic) {
+        L.bgMusic.pause();
+        L.bgMusic.currentTime = 90;
+      }
       return;
     }
 
-    // Gerar Notas
     this.spawnTimer += dt;
     if (this.spawnTimer >= this.spawnInterval) {
       this.spawnTimer = 0;
@@ -401,7 +425,6 @@
       }
     }
 
-    // Mover Notas
     for (let i = this.notes.length - 1; i >= 0; i--) {
       const n = this.notes[i];
       n.y += this.noteSpeed * dt;
@@ -411,7 +434,7 @@
         this.streak = 0;
         this.multiplier = 1;
         this.rockMeter = Math.max(0, this.rockMeter - 7);
-        this.feedbackText = 'PERDEU!'; this.feedbackColor = '#ef4444';
+        this.feedbackText = 'TÁ FRACO...'; this.feedbackColor = '#ef4444';
         this.feedbackTimer = 0.4;
       }
 
@@ -424,7 +447,10 @@
       this.state = 'gameover';
       this.stateTimer = 0;
       playGuitarHeroSound(0, true);
-      if (L.bgMusic) L.bgMusic.pause();
+      if (L.bgMusic) {
+        L.bgMusic.pause();
+        L.bgMusic.currentTime = 90;
+      }
     }
   };
 
@@ -434,11 +460,9 @@
 
     ctx.save();
 
-    // 1. Fundo do Palco
     ctx.fillStyle = '#080914';
     ctx.fillRect(0, 0, W, H);
 
-    // 2. Highway
     const highwayW = 280;
     const highwayX = (W - highwayW) / 2;
     const laneW = highwayW / 4;
@@ -457,7 +481,6 @@
       ctx.stroke();
     }
 
-    // Hit Line
     ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.fillRect(highwayX, targetY - 18, highwayW, 36);
     ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 3;
@@ -466,7 +489,6 @@
     ctx.lineTo(highwayX + highwayW, targetY);
     ctx.stroke();
 
-    // Receptores
     this.lanes.forEach((lane, i) => {
       const lx = highwayX + i * laneW + laneW / 2;
       ctx.fillStyle = lane.color;
@@ -480,7 +502,6 @@
       ctx.fillText(lane.label, lx, H - 20);
     });
 
-    // 3. Notas
     this.notes.forEach(n => {
       if (n.hit) return;
       const lane = this.lanes[n.lane];
@@ -499,10 +520,9 @@
       ctx.restore();
     });
 
-    // 4. Personagens nas Laterais
     drawEngineCharacter(ctx, highwayX - 70, 110, { isTomas: true, timer: this.timer });
     ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
-    ctx.fillText('TOMÁS (BATERIA)', highwayX - 70, 150);
+    ctx.fillText('TIMO (BATERIA)', highwayX - 70, 150);
 
     drawEngineCharacter(ctx, highwayX - 70, 270, { emoji: '🧑🏻', hoodieColor: '#831843', shirtColor: '#ec4899', timer: this.timer });
     ctx.fillStyle = '#ec4899'; ctx.font = 'bold 10px monospace';
@@ -516,7 +536,6 @@
     ctx.fillStyle = '#a855f7'; ctx.font = 'bold 10px monospace';
     ctx.fillText('DIGGA (GUITARRA)', highwayX + highwayW + 70, 310);
 
-    // 5. HUD
     ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
     roundRectLocal(ctx, 15, H / 2 - 80, 24, 160, 6); ctx.fill();
     const fillH = (this.rockMeter / 100) * 152;
@@ -549,7 +568,6 @@
       ctx.fillText(this.feedbackText, W / 2, targetY - 40);
     }
 
-    // 6. TELAS DE PAUSA, INTRO (CARTÕES 1 E 2), FIM DE JOGO E VITÓRIA
     if (this.state === 'paused') {
       ctx.fillStyle = 'rgba(6, 7, 19, 0.85)';
       ctx.fillRect(0, 0, W, H);
@@ -568,7 +586,6 @@
       ctx.fillText('[ R ] Recomeçar Nível', W / 2, pBoxY + 105);
     }
 
-    // 7. Diálogos Iniciais Divididos em 2 Cartões
     if (this.state === 'intro_dialog') {
       ctx.fillStyle = 'rgba(10, 12, 26, 0.65)';
       ctx.fillRect(0, 0, W, H);
@@ -582,12 +599,11 @@
       ctx.strokeStyle = '#8ad'; ctx.lineWidth = 3;
       roundRectLocal(ctx, x, y, w, boxH, 10); ctx.stroke();
 
-      // CARTÃO 1: Contexto da História
       if (this.introStep === 1) {
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(14, true) : 'bold 14px monospace';
         ctx.textAlign = 'left';
-        ctx.fillText('QUEST', x + pad, y + pad + 2);
+        ctx.fillText('📜 QUEST', x + pad, y + pad + 2);
 
         ctx.fillStyle = '#fff'; 
         ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace';
@@ -602,8 +618,6 @@
         ctx.font = typeof textFont === 'function' ? textFont(11, true) : 'bold 11px monospace';
         ctx.fillText('Pressiona [ ESPAÇO ] para continuar ➔', x + w - pad, y + boxH - 14);
       }
-
-      // CARTÃO 2: Instruções & Dificuldade
       else if (this.introStep === 2) {
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(14, true) : 'bold 14px monospace';
@@ -617,10 +631,9 @@
         ctx.fillText('Carrega nas teclas no momento em que as notas passarem na linha amarela:', x + pad, contentY);
 
         ctx.font = typeof textFont === 'function' ? textFont(13, true) : 'bold 13px monospace';
-        ctx.fillText('1/A/←: Tomás (Bateria)  |  2/S/↑: Hugo (Teclas)', x + pad, contentY + 16);
+        ctx.fillText('1/A/←: Timo (Bateria)  |  2/S/↑: Hugo (Teclas)', x + pad, contentY + 16);
         ctx.fillText('3/D/↓: Freitas (Voz)    |  4/F/→: Digga (Guitarra)', x + pad, contentY + 30);
 
-        // Seletor de Dificuldade
         ctx.fillStyle = '#ffffff'; 
         ctx.font = typeof textFont === 'function' ? textFont(13) : '13px monospace';
         ctx.fillText('DIFICULDADE:', x + pad, y + boxH - 14);
@@ -641,7 +654,6 @@
           ctx.fillText(d.label, d.x, y + boxH - 12);
         });
 
-        // Prompt para começar
         ctx.textAlign = 'right';
         ctx.fillStyle = '#ffe27a'; 
         ctx.font = typeof textFont === 'function' ? textFont(11, true) : 'bold 11px monospace';
@@ -659,38 +671,33 @@
     }
 
     if (this.state === 'complete') {
-     const progress = Math.min(1, this.timer * 1.5);
+      const progress = Math.min(1, this.timer * 1.5);
 
-      // Overlay de Fundo
       ctx.fillStyle = `rgba(16, 14, 26, ${0.9 * progress})`;
       ctx.fillRect(0, 0, W, H);
 
       ctx.save();
       ctx.globalAlpha = progress;
 
-      // Dimensões do Painel Retro
       const boxW = Math.min(W - 32, 340);
       const boxH = 290;
       const boxX = (W - boxW) / 2;
       const boxY = (H - boxH) / 2;
 
-      // Fundo do Painel
       ctx.fillStyle = '#100e1a';
-      roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+      roundRectLocal(ctx, boxX, boxY, boxW, boxH, 10);
       ctx.fill();
 
-      // Moldura Dupla Dourada / Retro Arcade
       ctx.strokeStyle = '#ffe27a';
       ctx.lineWidth = 3;
-      roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+      roundRectLocal(ctx, boxX, boxY, boxW, boxH, 10);
       ctx.stroke();
 
       ctx.strokeStyle = 'rgba(255, 226, 122, 0.3)';
       ctx.lineWidth = 1;
-      roundRect(ctx, boxX + 4, boxY + 4, boxW - 8, boxH - 8, 7);
+      roundRectLocal(ctx, boxX + 4, boxY + 4, boxW - 8, boxH - 8, 7);
       ctx.stroke();
 
-      // Cabeçalho
       ctx.textAlign = 'center';
       
       ctx.fillStyle = '#ffe27a';
@@ -698,51 +705,48 @@
       ctx.fillText('🏆 NÍVEL 9 CONCLUÍDO', W / 2, boxY + 28);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px ' + TEXT_FONT_STACK;
+      ctx.font = 'bold 18px ' + (typeof TEXT_FONT_STACK !== 'undefined' ? TEXT_FONT_STACK : 'monospace');
       ctx.fillText('CA GANDA CONCERTO!', W / 2, boxY + 54);
 
-      // Cartão Central de Conquista Amorosa
       const cardW = boxW - 32;
       const cardH = 92;
       const cardX = boxX + 16;
       const cardY = boxY + 72;
 
       ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-      roundRect(ctx, cardX, cardY, cardW, cardH, 8);
+      roundRectLocal(ctx, cardX, cardY, cardW, cardH, 8);
       ctx.fill();
 
       ctx.strokeStyle = 'rgba(255, 107, 139, 0.4)';
       ctx.lineWidth = 1;
-      roundRect(ctx, cardX, cardY, cardW, cardH, 8);
+      roundRectLocal(ctx, cardX, cardY, cardW, cardH, 8);
       ctx.stroke();
 
       ctx.save();
       ctx.globalAlpha = progress;
       ctx.fillStyle = '#ffffff';
-      ctx.font = emojiFont(28);
+      ctx.font = typeof emojiFont === 'function' ? emojiFont(28) : '28px sans-serif';
       ctx.fillText('🎸', W / 2, cardY + 34);
       ctx.restore();
       
       ctx.fillStyle = '#ff6b8b';
-      ctx.font = 'bold 14px ' + TEXT_FONT_STACK;
-      ctx.fillText(`PONTUAÇÃO FINAL: ${this.score} PTS`, W / 2, cardY + 108);
+      ctx.font = 'bold 14px ' + (typeof TEXT_FONT_STACK !== 'undefined' ? TEXT_FONT_STACK : 'monospace');
+      ctx.fillText(`PONTUAÇÃO FINAL: ${this.score} PTS`, W / 2, cardY + 110);
 
       ctx.fillStyle = '#7fd97f';
       ctx.font = 'bold 12px monospace';
       ctx.fillText('✓ MELHOR CONCERTO DO FREITAS ATÉ HOJE', W / 2, cardY + 76);
 
-      // Texto de Continuação
       if (this.timer > 0.6) {
         ctx.fillStyle = '#d1d5db';
-        ctx.font = '12px ' + TEXT_FONT_STACK;
-        ctx.fillText('Este palco nunca teve tanta classe...', W / 2, boxY + 195);
+        ctx.font = '12px ' + (typeof TEXT_FONT_STACK !== 'undefined' ? TEXT_FONT_STACK : 'monospace');
+        ctx.fillText('Este palco nunca teve tanta classe...', W / 2, boxY + 210);
         
         ctx.fillStyle = '#ffe27a';
-        ctx.font = 'italic 11px ' + TEXT_FONT_STACK;
-        ctx.fillText('Descobre o que ainda há por fazer!', W / 2, boxY + 213);
+        ctx.font = 'italic 11px ' + (typeof TEXT_FONT_STACK !== 'undefined' ? TEXT_FONT_STACK : 'monospace');
+        ctx.fillText('Descobre o que ainda há por fazer!', W / 2, boxY + 225);
       }
 
-      // Botão Continuar
       if (this.timer > 1.2) {
         const pulse = Math.sin(this.timer * 6) * 0.2 + 0.8;
         
@@ -755,14 +759,15 @@
         const btnY = boxY + boxH - 40;
 
         ctx.fillStyle = '#ffe27a';
-        roundRect(ctx, btnX, btnY, btnW, btnH, 5);
+        roundRectLocal(ctx, btnX, btnY, btnW, btnH, 5);
         ctx.fill();
 
         ctx.fillStyle = '#100e1a';
         ctx.font = 'bold 11px monospace';
         ctx.fillText('PRESSIONA [ ESPAÇO ]', W / 2, btnY + 18);
         ctx.restore();
-      }    }
+      }    
+    }
 
     ctx.restore();
   };

@@ -13,7 +13,7 @@
 
     Dialogue.start([
       { speaker: 'BEBÉ TOTTI', text: 'AHHHHHHHHHH 👶🏼⚡️' },
-      { speaker: 'QUEST', text: 'O Tomás é agora tio... mas precisa de decifrar o que a Totti precisa!' },
+      { speaker: '📜 QUEST', text: 'O Timo agora é tio... mas precisa de decifrar o que a Totti precisa!' },
       { speaker: 'INSTRUÇÕES', text: 'Presta atenção ao balão de pensamento da Totti. Pressiona [1], [2], [3] ou [4] para a acalmar. Tens de ser rápido.' }
     ], () => {
       this.state = 'playing';

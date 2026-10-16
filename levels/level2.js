@@ -135,12 +135,12 @@
 
   // ---- best-friend quiz -------------------------------------------------------
   const QUIZ = [
-    { q:'Quem sobreviveria mais tempo numa zombie apocalypse?',
-      a:['Félix','Pinho'], correct:0, correct:1,
-      right:'Esta nem eu sabia responder.', wrong:'Esta nem eu sabia responder.' },
+    { q:'Quem sobreviveria mais tempo a uma zombie apocalypse?',
+      a:['Félix','Pinho'], correct:1, correct:0,
+      right:'Esta nem eu sabia responder.', wrong:'Esta nem eu sabia responder mas é chunga estares a dizer que não sou eu. Repete pf.' },
     { q:'Quem é mais provável de fazer 189 sons de pai quando se senta num sofá?',
       a:['Félix','Pinho'], correct:1,
-      right:'Já não está a ir para novo...', wrong:'Eu?? Tenta de novo!' },
+      right:'Já não está a ir para novo...', wrong:'Eu?? Lol não me parece.' },
     { q:"Quem iria ao Japão e diria que não experimentou sushi porque lá o sushi é uma shit?",
       a:['Félix','Pinho'], correct:0,
       right:'E digo-te mais - se voltasse lá, faria o mesmo.', wrong:'Claramente não estás atento. Tenta de novo!' },
@@ -172,7 +172,7 @@
   function startFelixQuiz(){
     felixState='quiz';
     Dialogue.start([
-      {speaker:'FÉLIX', text:'Antes de te ajudar, preciso de saber uma coisa.'},
+      {speaker:'FÉLIX', text:'Antes de te ajudar, preciso de saber umas coisas.'},
       {speaker:'', text:'❓ BEST FRIEND QUIZ'},
     ], ()=>{
       askQuiz(0, ()=>{
@@ -186,7 +186,7 @@
     felixDropTimer = 0.9; felixDropIdx = 0;
     felixFleeClock = 0;
     quest = 'Persegue o Félix! Desvia-te do que ele deixa cair. 🏃';
-    Toast.show('🏃 OLHA QUE O FÉLIX CORRER BEM!', 2.6);
+    Toast.show('🏃 OLHA QUE O FÉLIX CORRE BEM!', 2.6);
   }
 
   function updateFelixFlee(dt){
@@ -405,7 +405,7 @@
       return;
     }
     if(e.tag==='pinho'){
-      if(found.pinho){ Dialogue.say('PINHO','Excelente. Agora junta-te à Dani na Roda de Samba!'); return; }
+      if(found.pinho){ Dialogue.say('PINHO','Excelente. Agora vai buscar a Dani!'); return; }
       if(!found.felix){ Dialogue.say('PINHO','Vai ter com o Félix primeiro. Não sou eu que tomo as decisões aqui (idealmente em lado nenhum).'); return; }
       if(Game.flag('pinho_quiz_started')){ Dialogue.say('PINHO','Foca-te. Responde às perguntas.'); return; }
       Game.flag('pinho_quiz_started', true);
@@ -424,13 +424,13 @@
       return;
     }
     if(e.tag==='dani'){
-      if(found.dani){ Dialogue.say('DANI','A Roda de Samba não para! Vamos a isto!'); return; }
-      if(!found.pinho){ Dialogue.say('DANI','Oii! Fala primeiro com o Félix e o Pinho para juntar o pessoal todo!'); return; }
+      if(found.dani){ Dialogue.say('DANI','Sambinhaaaaaa!'); return; }
+      if(!found.pinho){ Dialogue.say('DANI','Oii! Fala primeiro com o Félix e o Pinho!'); return; }
 
       Dialogue.start([
-        {speaker:'DANI', text:'Tomás!! Junta-te à Roda de Samba! 🪘💃'},
+        {speaker:'DANI', text:'Timo!! Junta-te à Roda de Samba! 🪘💃'},
         {speaker:'TIMO', text:'Não me apetecia nada agora uma roda de samba... não queres antes vir connosco?'},
-        {speaker:'DANI', text:'Se aguentares 10 segundos no meio da Roda sem fugir, eu vou convosco!'},
+        {speaker:'DANI', text:'Se aguentares 10 segundos no meio da Roda, eu vou convosco!'},
         {speaker:'', text:'😱 SOBREVIVER À RODA DE SAMBA'},
       ], startDaniMinigame);
       return;
@@ -442,9 +442,9 @@
     if(found[key]) return;
     found[key]=true; Game.flag('l2_found_'+key, true);
     const count=(found.felix?1:0)+(found.pinho?1:0)+(found.dani?1:0);
-    if(key==='felix'){ quest = 'Encontra o Pinho - ele está rodeado das coisas dele.'; Toast.show('🤝 O FÉLIX ESTÁ IN', 2.8); }
-    if(key==='pinho'){ quest = 'Encontra a Dani mas cuidado com os teus ouvidos.. ela está numa Roda de Samba! 🪘'; Toast.show('🎧 O PINHO ESTÁ IN', 2.8); }
-    if(count>=3){ quest=''; Toast.show('BEST FRIENDS: 3/3', 3); setTimeout(friendsUnlocked, 900); }
+    if(key==='felix'){ quest = 'Encontra o Pinho - ele está rodeado das coisitas dele.'; Toast.show('🤝 O FÉLIX ESTÁ IN', 2.8); }
+    if(key==='pinho'){ quest = 'Encontra a Dani mas cuidado... ela está numa Roda de Samba! 🪘'; Toast.show('🎧 O PINHO ESTÁ IN', 2.8); }
+    if(count>=3){ quest=''; Toast.show('FRIENDS: 3/3', 3); setTimeout(friendsUnlocked, 900); }
   }
 
   function friendsUnlocked() {
@@ -675,7 +675,7 @@
 
     world.add({tag:'prop', interact:true, x:18*TILE, y:5*TILE, w:22, h:22, emoji:'🍺', size:24, flavor:'Uma cerveja. Cheia. Completamente morta. Suspeito.'});
     world.add({tag:'prop', interact:true, x:26*TILE, y:8*TILE, w:22, h:22, emoji:'⚽', size:24, flavor:'Uma bola meia murcha.'});
-    world.add({tag:'prop', interact:true, x:18*TILE, y:8*TILE, w:22, h:22, emoji:'🎟️', size:24, flavor:'Bilhetes para um concerto.'});
+    world.add({tag:'prop', interact:true, x:18*TILE, y:8*TILE, w:22, h:22, emoji:'👟', size:24, flavor:'Umas Vans nunca usadas.'});
     world.add({tag:'prop', interact:true, x:26*TILE, y:5*TILE, w:22, h:22, emoji:'🎸', size:24, flavor:'Uma guitarra. Está a arejar porque esteve 4 anos debaixo da cama.'});
     world.add({tag:'prop', interact:true, x:22*TILE, y:9*TILE, w:22, h:22, emoji:'🎮', size:24, flavor:'Um comando da switch. Foi a Dani que não arrumou...'});
 

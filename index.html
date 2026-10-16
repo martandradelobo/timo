@@ -59,26 +59,16 @@
     z-index: 1;
   }
 
-  /* Títulos */
-  #title h1 {
-    font-size: 42px;
-    margin: 0;
-    color: #ffe27a;
-    letter-spacing: 4px;
-    text-shadow: 3px 3px 0px #92400e, 0 0 12px rgba(255, 226, 122, 0.5);
-    text-transform: uppercase;
+  /* Estilo da Imagem do Título */
+  .title-logo {
+    max-width: 280px;
+    height: auto;
+    margin-bottom: 15px;
+    image-rendering: pixelated;
   }
 
-  #title h2 {
-    font-size: 14px;
-    margin: 2px 0 14px;
-    color: #38bdf8;
-    letter-spacing: 6px;
-    text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
-  }
-
-  /* Botões e Interação */
-  .btn-group {
+  /* Menus e Botões */
+  #main-menu {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -86,10 +76,23 @@
     margin-top: 5px;
   }
 
+  #level-select-menu {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #credits-menu {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 380px;
+  }
+
   .btn {
     padding: 10px 16px;
     background: #1e293b;
-    border: 2px solid #8ad;
+    border: 2px solid #5561d3;
     border-radius: 6px;
     color: #fff;
     cursor: pointer;
@@ -105,8 +108,8 @@
 
   .btn:hover, .btn.selected {
     background: #334155;
-    border-color: #ffe27a;
-    color: #ffe27a;
+    border-color: #ffd100;
+    color: #ffd100;
     transform: translateY(-2px);
     box-shadow: 0 6px 0 #0f172a, 0 0 12px rgba(255, 226, 122, 0.4);
   }
@@ -126,12 +129,6 @@
     box-shadow: 0 6px 0 #0f172a, 0 0 12px rgba(244, 63, 94, 0.4);
   }
 
-  #level-select-menu {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-  }
-
   .level-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -143,13 +140,6 @@
     padding: 8px 0;
     width: 75px;
     font-size: 13px;
-  }
-
-  #credits-menu {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    width: 380px;
   }
 
   .credits-box {
@@ -200,15 +190,15 @@
   <canvas id="game" width="640" height="480"></canvas>
   
   <div id="title">
-    <h1>TIMO</h1>
-    <h2>THE QUEST</h2>
+    <!-- Imagem do Título fornecida -->
+    <img src="title-logo.png" alt="TIMO THE QUEST" class="title-logo">
     
     <!-- Menu Principal -->
-    <div id="main-menu" class="btn-group">
+    <div id="main-menu">
       <button class="btn" id="play">▶ Novo Jogo</button>
       <button class="btn" id="cont" style="display:none; border-color:#4ade80; color:#4ade80;">Continuar</button>
       <button class="btn" id="btn-levels">🎮 Selecionar Nível</button>
-      <button class="btn" id="btn-credits" style="border-color:#a855f7; color:#c084fc;">❤️ Context & Credits</button>
+      <button class="btn" id="btn-credits" style="border-color:#ff0070; color:#ff0070;">❤️ Context & Credits</button>
     </div>
 
     <!-- Submenu de Seleção de Níveis -->
@@ -230,6 +220,7 @@
       <button class="btn btn-back" id="btn-back">◄ Voltar</button>
     </div>
 
+    <!-- Submenu de Créditos -->
     <div id="credits-menu">
       <div class="credits-box">
         <h3>❤️ QUERIDO ARROZINHO ❤️</h3>
@@ -263,7 +254,7 @@
   (function checkMobile() {
     const ehTelemovel = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
     if (ehTelemovel) {
-      document.body.innerHTML = "<div style='background:#111; color:white; font-family:sans-serif; text-align:center; padding-top:20vh; height:100vh;'><h1>Timo The Quest é exclusivo para computadores.</h1><p>Por favor, aceda através de um PC.</p></div>";
+      document.body.innerHTML = "<div style='background:#111; color:white; font-family:sans-serif; text-align:center; padding-top:20vh; height:100vh;'><h1>Timo The Quest é um jogo exclusivo para computadores.</h1><p>Por favor, aceda através de um PC, bj.</p><p>❤️ Kiu</p></div>";
       throw new Error("Dispositivo móvel bloqueado.");
     }
   })();
@@ -287,6 +278,7 @@
   function showTitle() {
     title.style.display = 'flex';
     document.getElementById('hint').style.display = 'block';
+    switchMenu(levelSelectMenu, mainMenu);
     checkSave();
   }
 
@@ -327,7 +319,10 @@
   }
 
   function switchMenu(hideEl, showEl) {
-    hideEl.style.display = 'none';
+    mainMenu.style.display = 'none';
+    levelSelectMenu.style.display = 'none';
+    creditsMenu.style.display = 'none';
+    
     showEl.style.display = 'flex';
     menuSelectedIndex = 0;
     updateMenuSelection();
@@ -339,7 +334,6 @@
   btnBackCredits.onclick = () => switchMenu(creditsMenu, mainMenu);
 
   window.addEventListener('keydown', (e) => {
-    // Tecla ESC para regressar ao Menu Principal durante o jogo
     if (e.key === 'Escape') {
       if (title.style.display === 'none') {
         showTitle();

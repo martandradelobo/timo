@@ -12,7 +12,7 @@
     }
 
     Dialogue.start([
-      { speaker: 'QUEST', text: 'GANHA A GRANDE FINAL DOS 200m LIVRES!' },
+      { speaker: '📜 QUEST', text: 'GANHA A GRANDE FINAL DOS 200m LIVRES!' },
       { speaker: 'DICAS', text: 'Gasta a tua energia com estratégia! Braçadas rápidas consomem estamina.' },
       { speaker: 'INSTRUÇÕES', text: 'Carrega [ ESPAÇO ] no centro da barra para acelerar. Se a estamina se esgotar, ficas exausto!' }
     ], () => {
@@ -33,7 +33,7 @@
 
     // Nadadores em pistas fixas (Tomás: Pista 0, Canelinhas: Pista 1, Reizinho: Pista 2)
     this.swimmers = [
-      { id: 'tomas', name: 'TOMÁS', emoji: '🏊🏼‍♂️', color: '#38bdf8', pos: 0, speed: 0, laneIndex: 0, isPlayer: true },
+      { id: 'tomas', name: 'TIMO', emoji: '🏊🏼‍♂️', color: '#38bdf8', pos: 0, speed: 0, laneIndex: 0, isPlayer: true },
       { id: 'canelinhas', name: 'CANELINHAS', emoji: '🏊🏼', color: '#f43f5e', pos: 0, speed: 11, laneIndex: 1 },
       { id: 'reizinho', name: 'REIZINHO', emoji: '🏊🏽‍♂️', color: '#fbbf24', pos: 0, speed: 10, laneIndex: 2 }
     ];
@@ -119,7 +119,7 @@
       if (this.barPos >= this.targetZone.start && this.barPos <= this.targetZone.end) {
         tomas.speed = 32;
         this.stamina = Math.max(0, this.stamina - 12);
-        this.lastFeedback = '⚡ BRAÇADA PERFEITA!';
+        this.lastFeedback = '⚡️ BRAÇADA PERFEITA!';
       } else if (this.barPos >= this.goodZone.start && this.barPos <= this.goodZone.end) {
         tomas.speed = 20;
         this.stamina = Math.max(0, this.stamina - 7);
@@ -252,7 +252,7 @@
 
       // Estamina
       ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left';
-      ctx.fillText('ESTAMINA DO TOMÁS:', 20, H - 88);
+      ctx.fillText('ESTAMINA DO TIMO:', 20, H - 88);
 
       const stamW = 120, stamH = 10, stamX = 145, stamY = H - 96;
       ctx.fillStyle = '#1e293b'; roundRect(ctx, stamX, stamY, stamW, stamH, 4); ctx.fill();
@@ -328,7 +328,7 @@
 
       ctx.fillStyle = '#38bdf8';
       ctx.font = 'bold 15px ' + TEXT_FONT_STACK;
-      ctx.fillText('1º LUGAR: TOMÁS!', W / 2, cardY + 58);
+      ctx.fillText('1º LUGAR: TIMO!', W / 2, cardY + 58);
 
       ctx.fillStyle = '#7fd97f'; ctx.font = 'bold 12px monospace';
       ctx.fillText('✓ CAMPEÃO DOS 200m LIVRES', W / 2, cardY + 76);
